@@ -1,0 +1,7 @@
+model: PPO
+env: Reacher-v2
+stable_baselines_verbosity: 1
+stable_baselines_policy_class: MlpPolicy
+wandb_entity: nyu_drl
+wandb_project: test-project
+wandb_key: 1b2711d130518c5e80d47a6341cfaf2e4b9f5903

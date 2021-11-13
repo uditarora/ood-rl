@@ -1,0 +1,12 @@
+name: ood-rl-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - stable-baselines3
+  - gym
+  - wandb
+  - hydra-core
+  - pip:
+    - mujoco-py
