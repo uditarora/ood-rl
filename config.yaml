@@ -1,7 +1,12 @@
 model: PPO
-env: Reacher-v2
-stable_baselines_verbosity: 1
-stable_baselines_policy_class: MlpPolicy
-wandb_entity: nyu_drl
-wandb_project: test-project
-wandb_key: 1b2711d130518c5e80d47a6341cfaf2e4b9f5903
+env: CartPole-v1
+total_timesteps: 100000
+
+stable_baselines:
+  verbosity: 1
+  policy_class: MlpPolicy
+
+wandb:
+  entity: nyu_drl
+  project: test-project
+  key: 1b2711d130518c5e80d47a6341cfaf2e4b9f5903
