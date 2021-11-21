@@ -3,7 +3,8 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.7
+  - pytorch-gpu
   - stable-baselines3
   - gym
   - wandb
