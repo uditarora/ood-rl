@@ -16,7 +16,7 @@ singularity exec --overlay /home/sj3549/public/ood-rl-overlay.ext3:ro /scratch/w
 conda activate /ext3/ood-rl-env
 ```
 
-- For mujoco-py to be able to detect your MuJoCo installation, you need to set the following env var:
+- For mujoco-py to be able to detect your MuJoCo installation, you need to export following env vars:
 ```
 MUJOCO_PY_MUJOCO_PATH=/ext3/mujoco210
 MUJOCO_PY_MJKEY_PATH=/ext3/mujoco210/mjkey.txt
@@ -24,7 +24,9 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ext3/mujoco210/bin
 ```
 **Make sure you set these environment variables before running your code.**
 
+(The env var setup can also be done as such: `bash setup_env_vars.sh`)
+
 Example training command: 
 ```bash
-MUJOCO_PY_MUJOCO_PATH=/ext3/mujoco210 MUJOCO_PY_MJKEY_PATH=/ext3/mujoco210/mjkey.txt LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ext3/mujoco210/bin python train.py 'env=Reacher-v2'
+bash setup_env_vars.sh; python train.py 'env=Reacher-v2'
 ```
