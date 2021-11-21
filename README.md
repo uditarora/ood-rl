@@ -20,5 +20,6 @@ conda activate /ext3/ood-rl-env
 ```
 MUJOCO_PY_MUJOCO_PATH=/ext3/mujoco210
 MUJOCO_PY_MJKEY_PATH=/ext3/mujoco210/mjkey.txt
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ext3/mujoco210/bin
 ```
 **Make sure you set this environment variable before running your code.** 
