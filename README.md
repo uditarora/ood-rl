@@ -2,7 +2,7 @@
 OOD Detection in RL
 
 
-- The overlayfs can be found at `/home/sj3549/public/ood-rl-overlay.ext3`. It contains the following-
+- The overlayfs can be found at `/home/scratch/public/ood-rl-overlay.ext3`. It contains the following-
   - A MuJoCo installation and a license key
   - A conda environment `/ext3/ood-rl-env` with the following
     - pytorch
@@ -12,7 +12,7 @@ OOD Detection in RL
 - To use:
 ```
 srun --nodes=1 --tasks-per-node=1 --cpus-per-task=1 --mem=32GB --time=1:00:00 --gres=gpu:1 --pty /bin/bash
-singularity exec --overlay /home/sj3549/public/ood-rl-overlay.ext3:ro /scratch/work/public/singularity/cuda11.3.0-cudnn8-devel-ubuntu20.04.sif /bin/bash
+singularity exec --overlay /scratch/sj3549/public/ood-rl-overlay.ext3:ro /scratch/work/public/singularity/cuda11.3.0-cudnn8-devel-ubuntu20.04.sif /bin/bash
 conda activate /ext3/ood-rl-env
 ```
 
