@@ -1,10 +1,12 @@
 name: ood-rl-env
 channels:
-  - defaults
   - conda-forge
+  - defaults
+  - nvidia
 dependencies:
   - python=3.7
-  - pytorch-gpu
+  - nvidia::cudatoolkit=11.3
+  - pytorch::pytorch
   - stable-baselines3
   - gym
   - wandb

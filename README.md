@@ -19,7 +19,7 @@ conda activate /ext3/ood-rl-env
 - For mujoco-py to be able to detect your MuJoCo installation, you need to export following env vars:
 ```
 MUJOCO_PY_MUJOCO_PATH=/ext3/mujoco210
-MUJOCO_PY_MJKEY_PATH=/ext3/mujoco210/mjkey.txt
+MUJOCO_PY_MJKEY_PATH=/ext3/mjkey.txt
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ext3/mujoco210/bin
 ```
 **Make sure you set these environment variables before running your code.**
