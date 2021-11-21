@@ -24,9 +24,9 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ext3/mujoco210/bin
 ```
 **Make sure you set these environment variables before running your code.**
 
-(The env var setup can also be done as such: `bash setup_env_vars.sh`)
+(The env var setup can also be done as such: `source setup_env_vars.sh`)
 
 Example training command: 
 ```bash
-bash setup_env_vars.sh; python train.py 'env=Reacher-v2'
+source setup_env_vars.sh; python train.py 'env=Reacher-v2'
 ```

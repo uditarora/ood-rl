@@ -15,7 +15,7 @@ conda activate /ext3/ood-rl-env
 
 cd /scratch/$USER/ood-rl
 
-bash setup_env_vars.sh
+source setup_env_vars.sh
 
 python -u train.py 'env=Reacher-v2' 'total_timesteps=5000000' 'model=PPO'
 "
