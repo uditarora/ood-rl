@@ -40,7 +40,7 @@ def main(cfg):
     )
 
     env = gym.make(cfg.env)
-    if cfg.use_ood:
+    if cfg.ood_config.use:
         env = OODEnv(env, cfg.ood_config)
 
     params = {
