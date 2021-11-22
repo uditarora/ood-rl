@@ -1,5 +1,6 @@
 import gym
 import hydra
+from ood_env import OODEnv
 import wandb
 
 import os
@@ -39,6 +40,9 @@ def main(cfg):
     )
 
     env = gym.make(cfg.env)
+    if cfg.use_ood:
+        env = OODEnv(env, cfg.ood_config)
+
     params = {
         "policy": cfg.stable_baselines.policy_class,
         "env": env,

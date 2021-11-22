@@ -2,6 +2,12 @@ model: PPO
 env: CartPole-v1
 total_timesteps: 100000
 
+ood_config:
+  use: False
+  prob: 0.05
+  type: random
+  random_std: 0.5
+
 stable_baselines:
   verbosity: 1
   policy_class: MlpPolicy
