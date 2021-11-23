@@ -4,6 +4,7 @@ from ood_env import OODEnv
 from util import ImageInputWrapper
 from stable_baselines3.common.vec_env.vec_frame_stack import VecFrameStack
 from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.monitor import Monitor
 
 from stable_baselines3.common.env_checker import check_env
 
@@ -55,6 +56,7 @@ def main(cfg):
         env = OODEnv(env, cfg.ood_config)
         check_env(env)
 
+    env = Monitor(env)
     env = DummyVecEnv([lambda: env])
 
     if cfg.image_input:
