@@ -12,7 +12,7 @@ ood_config:
 
 stable_baselines:
   verbosity: 1
-  policy_class: MlpPolicy
+  policy_class: CnnPolicy
 
 wandb:
   entity: nyu_drl

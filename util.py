@@ -2,36 +2,37 @@ import gym
 from gym.core import ObservationWrapper
 import numpy as np
 from collections import deque
-
-class FrameStack(gym.Wrapper):
-    def __init__(self, env, k):
-        gym.Wrapper.__init__(self, env)
-        self._k = k
-        self._frames = deque([], maxlen=k)
-        shp = env.observation_space.shape
-        self.observation_space = gym.spaces.Box(
-            low=0,
-            high=1,
-            shape=((shp[0] * k,) + shp[1:]),
-            dtype=env.observation_space.dtype)
-        self._max_episode_steps = env._max_episode_steps
-
-    def reset(self):
-        obs = self.env.reset()
-        for _ in range(self._k):
-            self._frames.append(obs)
-        return self._get_obs()
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        self._frames.append(obs)
-        return self._get_obs(), reward, done, info
-
-    def _get_obs(self):
-        assert len(self._frames) == self._k
-        return np.concatenate(list(self._frames), axis=0)
+from PIL import Image
 
 class ImageInputWrapper(ObservationWrapper):
-    def observation(self, observation):
+    resize = True
+    _height = 128
+    _width = 128
+
+    def __init__(self, env, resize=True, height=128, width=128):
+        super().__init__(env)
+        self.resize = resize
+        self._height = height
+        self._width = width
+
+        self._max_episode_steps = env._max_episode_steps
+
+        env.reset()
+        shp = self.observation().shape
+        self.observation_space = gym.spaces.Box(
+            low=0,
+            high=255,
+            shape=shp,
+            dtype=np.uint8)
+
+    def observation(self, observation=None):
         img = self.env.render(mode='rgb_array')
+        if self.resize:
+            img = self.resize_observation(img)
         return img
+
+    def resize_observation(self, observation):
+        obs_image = Image.fromarray(observation)
+        resized_image = obs_image.resize(size=(self._width, self._height), resample=0)
+        im = np.asarray(resized_image)
+        return im

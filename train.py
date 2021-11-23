@@ -1,12 +1,18 @@
 import gym
 import hydra
 from ood_env import OODEnv
-from util import FrameStack, ImageInputWrapper
+from util import ImageInputWrapper
+from stable_baselines3.common.vec_env.vec_frame_stack import VecFrameStack
+from stable_baselines3.common.vec_env import DummyVecEnv
+
+from stable_baselines3.common.env_checker import check_env
+
 import wandb
 
 import os
 
 from stable_baselines3 import PPO, SAC, DQN, A2C, DDPG, TD3
+
 from wandb.integration.sb3 import WandbCallback
 
 ALGO_DICT = {
@@ -41,11 +47,18 @@ def main(cfg):
     )
 
     env = gym.make(cfg.env)
-    if cfg.ood_config.use:
-        env = OODEnv(env, cfg.ood_config)
     if cfg.image_input:
         env = ImageInputWrapper(env)
-        env = FrameStack(env, k=cfg.n_frames_stack)
+        check_env(env)
+
+    if cfg.ood_config.use:
+        env = OODEnv(env, cfg.ood_config)
+        check_env(env)
+
+    env = DummyVecEnv([lambda: env])
+
+    if cfg.image_input:
+        env = VecFrameStack(env, 4)
 
     params = {
         "policy": cfg.stable_baselines.policy_class,

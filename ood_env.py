@@ -1,6 +1,8 @@
 import gym
 import random
 import numpy as np
+from gym.core import ObservationWrapper
+
 
 def generate_ood(ood_config, state=None):
     '''
@@ -15,17 +17,17 @@ def generate_ood(ood_config, state=None):
     else: #TODO
         raise NotImplementedError
 
-class OODEnv(gym.Env):
+class OODEnv(ObservationWrapper):
     '''
     A wrapper over a standar gym environment that provides OOD states
     upon executing step with a given probability.
     '''
     def __init__(self, base_env, ood_config):
+        super().__init__(base_env)
         self.base_env = base_env
         self.ood_config = ood_config
-    
-    def step(self, action):
-        state, reward, done, info = self.base_env.step(action)
+
+    def observation(self, observation=None):
         if random.random() < self.ood_config.prob:
-            state = generate_ood(self.ood_config, state)
-        return state, reward, done, info
+            observation = generate_ood(self.ood_config, observation)
+        return observation
