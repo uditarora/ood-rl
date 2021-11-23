@@ -1,6 +1,7 @@
 import gym
 import hydra
 from ood_env import OODEnv
+from util import FrameStack, ImageInputWrapper
 import wandb
 
 import os
@@ -42,6 +43,9 @@ def main(cfg):
     env = gym.make(cfg.env)
     if cfg.ood_config.use:
         env = OODEnv(env, cfg.ood_config)
+    if cfg.image_input:
+        env = ImageInputWrapper(env)
+        env = FrameStack(env, k=cfg.n_frames_stack)
 
     params = {
         "policy": cfg.stable_baselines.policy_class,

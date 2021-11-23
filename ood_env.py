@@ -15,7 +15,7 @@ def generate_ood(ood_config, state=None):
     else: #TODO
         raise NotImplementedError
 
-class OODEnv(gym.env):
+class OODEnv(gym.Env):
     '''
     A wrapper over a standar gym environment that provides OOD states
     upon executing step with a given probability.
