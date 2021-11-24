@@ -9,7 +9,7 @@
 #SBATCH --mem=64G
 #SBATCH -c 8
 
-singularity exec --nv --overlay $SCRATCH/ood-rl-overlay.ext3:ro /scratch/work/public/singularity/cuda11.3.0-cudnn8-devel-ubuntu20.04.sif /bin/bash -c "
+singularity exec --nv --overlay $SCRATCH/public/ood-rl-overlay.ext3:ro /scratch/work/public/singularity/cuda11.3.0-cudnn8-devel-ubuntu20.04.sif /bin/bash -c "
 source /ext3/miniconda3/bin/activate
 conda activate /ext3/ood-rl-env
 
