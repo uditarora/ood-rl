@@ -68,6 +68,7 @@ def main(cfg):
         "verbose": cfg.stable_baselines.verbosity,
         "tensorboard_log": f"runs/{run.id}",
     }
+    params = {**params, **cfg.hyperparams}
 
     # Initialize model
     model = ALGO_DICT[cfg.model](**params)
@@ -82,7 +83,6 @@ def main(cfg):
     model.save(f"{cfg.model}_{env.unwrapped.spec.id}_{run.id}")
 
     run.finish()
-
 
 if __name__ == '__main__':
     main()

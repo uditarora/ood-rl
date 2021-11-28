@@ -10,6 +10,18 @@ ood_config:
   type: random
   random_std: 0.5
 
+hyperparams:
+  learning_rate: 0.000104019
+  n_steps: 512
+  batch_size: 32
+  n_epochs: 5
+  gamma: 0.9
+  gae_lambda: 1.0
+  clip_range: 0.3
+  ent_coef: 7.52585e-08
+  vf_coef: 0.950368
+  max_grad_norm: 0.9
+
 stable_baselines:
   verbosity: 1
   policy_class: CnnPolicy
