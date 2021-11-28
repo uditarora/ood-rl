@@ -13,6 +13,7 @@ import wandb
 import os
 
 from stable_baselines3 import PPO, SAC, DQN, A2C, DDPG, TD3
+from sb3_contrib import TQC, QRDQN, MaskablePPO
 
 from wandb.integration.sb3 import WandbCallback
 
@@ -23,6 +24,11 @@ ALGO_DICT = {
     "A2C": A2C,
     "DDPG": DDPG,
     "TD3": TD3,
+    "TQC": TQC,
+    "QRDQN": QRDQN,
+    "PPO_MASK": MaskablePPO,
+    "PPO_Mask": MaskablePPO,
+    "MASKABLE_PPO": MaskablePPO
 }
 
 
