@@ -63,6 +63,7 @@ def main(cfg):
         check_env(env)
 
     env = Monitor(env)
+    env_name = env.spec.id
     env = DummyVecEnv([lambda: env])
 
     if cfg.image_input:
@@ -86,7 +87,9 @@ def main(cfg):
     ))
 
     # Save final model
-    model.save(f"{cfg.model}_{env.unwrapped.spec.id}_{run.id}")
+    model_save_filename = f"{cfg.model}_{env_name}_{run.id}"
+    model.save(model_save_filename)
+    print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
 
     run.finish()
 
