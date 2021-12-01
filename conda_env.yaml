@@ -18,3 +18,4 @@ dependencies:
     - optuna
     - tensorboard
     - pyglet
+    - sklearn
