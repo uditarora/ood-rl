@@ -4,6 +4,16 @@ total_timesteps: 100000
 n_frames_stack: 4
 image_input: True
 
+use_ood_wrapped_model: True
+eval_outlier_detection: True
+num_eval_rollouts: 100
+ood_detector:
+  pretrain_timesteps: 50000
+  fit_outlier_detectors_every_n: 1000
+  k: 20
+  distance_threshold: 0.5
+  distance_metric: md
+
 ood_config:
   use: False
   prob: 0.05

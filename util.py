@@ -1,8 +1,10 @@
 import gym
 from gym.core import ObservationWrapper
 import numpy as np
-from collections import deque
+from stable_baselines3.common.buffers import RolloutBuffer, DictRolloutBuffer
 from PIL import Image
+import torch
+from gym import spaces
 
 class ImageInputWrapper(ObservationWrapper):
     resize = True
@@ -36,3 +38,91 @@ class ImageInputWrapper(ObservationWrapper):
         resized_image = obs_image.resize(size=(self._width, self._height), resample=0)
         im = np.asarray(resized_image)
         return im
+
+
+class CircularRolloutBuffer(RolloutBuffer):
+    def add(
+        self,
+        obs: np.ndarray,
+        action: np.ndarray,
+        reward: np.ndarray,
+        episode_start: np.ndarray,
+        value: torch.Tensor,
+        log_prob: torch.Tensor,
+    ) -> None:
+        """
+        :param obs: Observation
+        :param action: Action
+        :param reward:
+        :param episode_start: Start of episode signal.
+        :param value: estimated value of the current state
+            following the current policy.
+        :param log_prob: log probability of the action
+            following the current policy.
+        """
+        if len(log_prob.shape) == 0:
+            # Reshape 0-d tensor to avoid error
+            log_prob = log_prob.reshape(-1, 1)
+
+        # Reshape needed when using multiple envs with discrete observations
+        # as numpy cannot broadcast (n_discrete,) to (n_discrete, 1)
+        if isinstance(self.observation_space, spaces.Discrete):
+            obs = obs.reshape((self.n_envs,) + self.obs_shape)
+
+        self.observations[self.pos] = np.array(obs).copy()
+        self.actions[self.pos] = np.array(action).copy()
+        self.rewards[self.pos] = np.array(reward).copy()
+        self.episode_starts[self.pos] = np.array(episode_start).copy()
+        self.values[self.pos] = value.clone().cpu().numpy().flatten()
+        self.log_probs[self.pos] = log_prob.clone().cpu().numpy()
+
+        self.pos += 1
+
+        if self.pos == self.buffer_size:
+            self.full = True
+            self.pos = 0
+
+
+class CircularDictRolloutBuffer(DictRolloutBuffer):
+    def add(
+            self,
+            obs,
+            action,
+            reward,
+            episode_start,
+            value,
+            log_prob,
+    ) -> None:
+        """
+        :param obs: Observation
+        :param action: Action
+        :param reward:
+        :param episode_start: Start of episode signal.
+        :param value: estimated value of the current state
+            following the current policy.
+        :param log_prob: log probability of the action
+            following the current policy.
+        """
+        if len(log_prob.shape) == 0:
+            # Reshape 0-d tensor to avoid error
+            log_prob = log_prob.reshape(-1, 1)
+
+        for key in self.observations.keys():
+            obs_ = np.array(obs[key]).copy()
+            # Reshape needed when using multiple envs with discrete observations
+            # as numpy cannot broadcast (n_discrete,) to (n_discrete, 1)
+            if isinstance(self.observation_space.spaces[key], spaces.Discrete):
+                obs_ = obs_.reshape((self.n_envs,) + self.obs_shape[key])
+            self.observations[key][self.pos] = obs_
+
+        self.actions[self.pos] = np.array(action).copy()
+        self.rewards[self.pos] = np.array(reward).copy()
+        self.episode_starts[self.pos] = np.array(episode_start).copy()
+        self.values[self.pos] = value.clone().cpu().numpy().flatten()
+        self.log_probs[self.pos] = log_prob.clone().cpu().numpy()
+
+        self.pos += 1
+
+        if self.pos == self.buffer_size:
+            self.full = True
+            self.pos = 0

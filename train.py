@@ -8,6 +8,8 @@ from stable_baselines3.common.monitor import Monitor
 
 from stable_baselines3.common.env_checker import check_env
 
+from ood_model_wrapper import OodDetectorWrappedModel
+
 import wandb
 
 import os
@@ -60,7 +62,7 @@ def main(cfg):
 
     if cfg.ood_config.use:
         env = OODEnv(env, cfg.ood_config)
-        check_env(env)
+        check_env(env) # TODO: Debug observation space issue
 
     env = Monitor(env)
     env_name = env.spec.id
@@ -77,19 +79,32 @@ def main(cfg):
     }
     params = {**params, **cfg.hyperparams}
 
-    # Initialize model
-    model = ALGO_DICT[cfg.model](**params)
-
-    # Train model
-    model.learn(total_timesteps=cfg.total_timesteps, callback=WandbCallback(
+    # Initialize policy
+    policy = ALGO_DICT[cfg.model](**params)
+    wandb_callback = WandbCallback(
         gradient_save_freq=100,
         verbose=2
-    ))
+    )
 
-    # Save final model
-    model_save_filename = f"{cfg.model}_{env_name}_{run.id}"
-    model.save(model_save_filename)
-    print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
+    if cfg.use_ood_wrapped_model:
+        model = OodDetectorWrappedModel(
+            policy,
+            cfg.ood_detector.pretrain_timesteps,
+            cfg.ood_detector.fit_outlier_detectors_every_n,
+            cfg.ood_detector.k,
+            cfg.ood_detector.distance_threshold,
+            cfg.ood_detector.distance_metric
+        )
+        model.learn(total_timesteps=cfg.total_timesteps, callback=wandb_callback)
+        model.eval(cfg.num_eval_rollouts, check_outlier=cfg.eval_outlier_detection)
+        model_save_filename = f"{cfg.model}_{env_name}_{run.id}"
+        model.save(model_save_filename)
+        print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
+    else:
+        policy.learn(total_timesteps=cfg.total_timesteps, callback=wandb_callback)
+        model_save_filename = f"{cfg.model}_{env_name}_{run.id}"
+        policy.save(model_save_filename)
+        print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
 
     run.finish()
 
