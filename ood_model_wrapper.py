@@ -14,7 +14,7 @@ class OodDetectorModel:
     def __init__(self,
                  p,
                  k,
-                 distance_threshold,
+                 distance_threshold, # TODO: Set threshold based on chi-square distribution
                  obs_transform_function,
                  distance_metric, # "md" or "robust-md"
                  num_actions
@@ -31,10 +31,17 @@ class OodDetectorModel:
         self.class_covariances = [np.zeros((k, k)) for _ in range(num_actions)]
 
     def fit(self, buffer:DictRolloutBuffer):
+        buffer_range = buffer.buffer_size if buffer.full else buffer.pos
+        if buffer_range == 0:
+            self.pca_model.fit(
+                self.obs_transform_function(buffer.observations).detach().cpu().numpy()
+            ) # Fit PCA to zeros to prevent errors
+            return
+        observations = buffer.observations[0:buffer_range]
         self.pca_model.fit(
-            self.obs_transform_function(buffer.observations).detach().cpu().numpy()
+            self.obs_transform_function(observations).detach().cpu().numpy()
         )
-        observations = self.pca_model.transform(self.obs_transform_function(buffer.observations).detach().cpu().numpy())
+        observations = self.pca_model.transform(self.obs_transform_function(observations).detach().cpu().numpy())
         actions = buffer.actions
         observations_per_action = [[observations[i] for i in range(observations.shape[0]) if actions[i]==action] for action in range(self.num_actions)]
 
@@ -51,8 +58,7 @@ class OodDetectorModel:
 
     def calculate_distance(self, obs):
         if self.distance_metric == "md":
-            # obs = self.obs_transform_function(obs).detach().cpu().numpy()
-            distances = [mahalanobis(obs, class_mean, VI=class_cov) for class_mean, class_cov in zip(self.class_means, self.class_covariances)] # TODO: figure out why this is giving 0
+            distances = [mahalanobis(obs, class_mean, VI=class_cov) for class_mean, class_cov in zip(self.class_means, self.class_covariances)]
             min_distance = np.min(distances)
             return min_distance
         else:
@@ -150,6 +156,7 @@ class OodDetectorWrappedModel:
             reset_num_timesteps = True,
     ):
         iteration = 0 # One iteration is basically one episode
+        self.policy.policy.set_training_mode(True)
 
         total_timesteps, callback = self.policy._setup_learn(
             total_timesteps,
@@ -166,11 +173,6 @@ class OodDetectorWrappedModel:
 
         while self.policy.num_timesteps < total_timesteps:
 
-            if self.policy.num_timesteps - self.last_ood_train_step >= self.fit_outlier_detectors_every_n:
-                self.outlier_detector.fit(self.outlier_buffer)
-                self.inlier_detector.fit(self.inlier_buffer)
-                self.last_ood_train_step = self.policy.num_timesteps
-
             continue_training = self.policy.collect_rollouts(self.policy.env, callback, self.temp_buffer, n_rollout_steps=self.policy.n_steps)
             if continue_training is False:
                 break
@@ -178,33 +180,39 @@ class OodDetectorWrappedModel:
             iteration += 1
             self.policy._update_current_progress_remaining(self.policy.num_timesteps, total_timesteps)
 
-            # Figure out of current trajectory is id or ood
-            # TODO: Simplify logic
-            trajectory_inlier = True
+            if (self.policy.num_timesteps == 0) or (self.policy.num_timesteps - self.last_ood_train_step >= self.fit_outlier_detectors_every_n):
+                self.policy.logger.info(f"{self.policy.num_timesteps}: Fitting OOD detectors.")
+                self.outlier_detector.fit(self.outlier_buffer)
+                self.inlier_detector.fit(self.inlier_buffer)
+                self.last_ood_train_step = self.policy.num_timesteps
+
+            # Figure out of current trajectory is id or ood # TODO: Simplify logic
             buffer_range = self.temp_buffer.buffer_size if self.temp_buffer.full else self.temp_buffer.pos
-            if self.policy.num_timesteps > self.pretrain_timesteps and (not self.pretraining_done):
-                for i in range(buffer_range):
-                    obs = self.temp_buffer.observations[i]
-                    if self.outlier_detector.predict_outlier(obs):
-                        trajectory_inlier = False
-                    else:
-                        if self.inlier_detector.predict_inlier(obs):
-                            trajectory_inlier = True
-                        else:
+            trajectory_begins = [i for i in range(buffer_range) if self.temp_buffer.episode_starts[i] != 0.0] + [buffer_range]
+            trajectory_ranges = [(begin, end, ) for begin, end in zip(trajectory_begins, trajectory_begins[1:])]
+
+            for trajectory_range in trajectory_ranges:
+                trajectory_inlier = True
+                if self.policy.num_timesteps > self.pretrain_timesteps and (not self.pretraining_done):
+                    for i in range(trajectory_range[0], trajectory_range[1]):
+                        obs = self.temp_buffer.observations[i]
+                        if self.outlier_detector.predict_outlier(obs):
                             trajectory_inlier = False
+                        else:
+                            if self.inlier_detector.predict_inlier(obs):
+                                trajectory_inlier = True
+                            else:
+                                trajectory_inlier = False
 
-            # Move the rollout to the proper buffer
-            # TODO: inlier/outlier buffer - make it a circular deque
-
-            destination_buffer = self.inlier_buffer if trajectory_inlier else self.outlier_buffer
-            for i in range(buffer_range):
-                # TODO: What happens when the buffer fills up? Need to clear this at some point.
-                destination_buffer.add(obs = self.temp_buffer.observations[i],
-                                       action = self.temp_buffer.actions[i],
-                                       reward = self.temp_buffer.rewards[i],
-                                       episode_start = self.temp_buffer.episode_starts[i],
-                                       value = torch.from_numpy(self.temp_buffer.values[i]),
-                                       log_prob = torch.from_numpy(self.temp_buffer.log_probs[i]))
+                # Move the rollout to the proper buffer
+                destination_buffer = self.inlier_buffer if trajectory_inlier else self.outlier_buffer
+                for i in range(trajectory_range[0], trajectory_range[1]):
+                    destination_buffer.add(obs = self.temp_buffer.observations[i],
+                                           action = self.temp_buffer.actions[i],
+                                           reward = self.temp_buffer.rewards[i],
+                                           episode_start = self.temp_buffer.episode_starts[i],
+                                           value = torch.from_numpy(self.temp_buffer.values[i]),
+                                           log_prob = torch.from_numpy(self.temp_buffer.log_probs[i]))
 
             # Display training infos
             if log_interval is not None and iteration % log_interval == 0:
@@ -229,7 +237,7 @@ class OodDetectorWrappedModel:
 
     def eval(self, num_rollouts = 100, check_outlier=True):
         self.policy.env.reset()
-        self.policy.policy.set_training_mode(False) # TODO: Check
+        self.policy.policy.set_training_mode(False)
 
         rollout_returns = [0 for _ in range(num_rollouts)]
         for rollout_idx in range(num_rollouts):
