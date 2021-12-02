@@ -9,7 +9,6 @@ import time
 from stable_baselines3.common.utils import safe_mean
 from util import CircularRolloutBuffer, CircularDictRolloutBuffer
 
-
 class OodDetectorModel:
     def __init__(self,
                  p,
@@ -104,16 +103,6 @@ class OodDetectorWrappedModel:
             n_envs=self.policy.n_envs,
         )
 
-        self.outlier_buffer = buffer_cls(
-            self.fit_outlier_detectors_every_n + self.policy.n_steps,
-            self.policy.observation_space,
-            self.policy.action_space,
-            self.policy.device,
-            gamma=self.policy.gamma,
-            gae_lambda=self.policy.gae_lambda,
-            n_envs=self.policy.n_envs,
-        )
-
         # This buffer is used to collect data. The data is then moved to the inlier/outlier buffer.
         self.temp_buffer = temp_buffer_cls(
             self.policy.n_steps,
@@ -128,14 +117,6 @@ class OodDetectorWrappedModel:
         self.policy.rollout_buffer = self.temp_buffer  # Set policy's buffer to temp buffer
 
         self.outlier_detector = OodDetectorModel(
-            self.p,
-            self.k,
-            self.distance_threshold,
-            self.obs_transform_function,
-            self.distance_metric,
-            self.num_actions
-        )
-        self.inlier_detector = OodDetectorModel(
             self.p,
             self.k,
             self.distance_threshold,
@@ -182,11 +163,10 @@ class OodDetectorWrappedModel:
 
             if (self.policy.num_timesteps == 0) or (self.policy.num_timesteps - self.last_ood_train_step >= self.fit_outlier_detectors_every_n):
                 self.policy.logger.info(f"{self.policy.num_timesteps}: Fitting OOD detectors.")
-                self.outlier_detector.fit(self.outlier_buffer)
-                self.inlier_detector.fit(self.inlier_buffer)
+                self.outlier_detector.fit(self.inlier_buffer)
                 self.last_ood_train_step = self.policy.num_timesteps
 
-            # Figure out of current trajectory is id or ood # TODO: Simplify logic
+            # Figure out of current trajectory is id or ood
             buffer_range = self.temp_buffer.buffer_size if self.temp_buffer.full else self.temp_buffer.pos
             trajectory_begins = [i for i in range(buffer_range) if self.temp_buffer.episode_starts[i] != 0.0] + [buffer_range]
             trajectory_ranges = [(begin, end, ) for begin, end in zip(trajectory_begins, trajectory_begins[1:])]
@@ -198,21 +178,16 @@ class OodDetectorWrappedModel:
                         obs = self.temp_buffer.observations[i]
                         if self.outlier_detector.predict_outlier(obs):
                             trajectory_inlier = False
-                        else:
-                            if self.inlier_detector.predict_inlier(obs):
-                                trajectory_inlier = True
-                            else:
-                                trajectory_inlier = False
 
                 # Move the rollout to the proper buffer
-                destination_buffer = self.inlier_buffer if trajectory_inlier else self.outlier_buffer
-                for i in range(trajectory_range[0], trajectory_range[1]):
-                    destination_buffer.add(obs = self.temp_buffer.observations[i],
-                                           action = self.temp_buffer.actions[i],
-                                           reward = self.temp_buffer.rewards[i],
-                                           episode_start = self.temp_buffer.episode_starts[i],
-                                           value = torch.from_numpy(self.temp_buffer.values[i]),
-                                           log_prob = torch.from_numpy(self.temp_buffer.log_probs[i]))
+                if trajectory_inlier:
+                    for i in range(trajectory_range[0], trajectory_range[1]):
+                        self.inlier_buffer.add(obs = self.temp_buffer.observations[i],
+                                               action = self.temp_buffer.actions[i],
+                                               reward = self.temp_buffer.rewards[i],
+                                               episode_start = self.temp_buffer.episode_starts[i],
+                                               value = torch.from_numpy(self.temp_buffer.values[i]),
+                                               log_prob = torch.from_numpy(self.temp_buffer.log_probs[i]))
 
             # Display training infos
             if log_interval is not None and iteration % log_interval == 0:
