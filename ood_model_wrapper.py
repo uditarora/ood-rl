@@ -250,7 +250,7 @@ class OodDetectorWrappedModel:
         mean_return = np.mean(rollout_returns)
         wandb.log({
             "eval_mean_return": mean_return,
-            "timestep": self.policy.num_timesteps
+            "global_step": self.policy.num_timesteps
         })
 
     def save(self, model_save_filename):
