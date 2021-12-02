@@ -13,7 +13,7 @@ def generate_ood(ood_config, state=None):
     if ood_config.type == 'random':
         if state is None:
             raise Exception("Can't add random noise without initial state")
-        return state + np.random.normal(0, ood_config.random_std, state.shape)
+        return np.clip(state + np.random.normal(0, ood_config.random_std, state.shape), a_min=0, a_max=255).astype(int)
     else: #TODO
         raise NotImplementedError
 

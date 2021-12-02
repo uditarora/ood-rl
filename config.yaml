@@ -18,7 +18,7 @@ ood_config:
   use: False
   prob: 0.05
   type: random
-  random_std: 0.5
+  random_std: 10
 
 hyperparams:
   learning_rate: 0.000104019

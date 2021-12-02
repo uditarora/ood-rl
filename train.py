@@ -62,7 +62,7 @@ def main(cfg):
 
     if cfg.ood_config.use:
         env = OODEnv(env, cfg.ood_config)
-        check_env(env) # TODO: Debug observation space issue
+        check_env(env)
 
     env = Monitor(env)
     env_name = env.spec.id
