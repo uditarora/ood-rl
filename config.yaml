@@ -17,8 +17,12 @@ ood_detector:
 ood_config:
   use: False
   prob: 0.05
-  type: random
+  type: task
   random_std: 10
+  outlier_env_names:
+    - CartPole-v1
+    - Ant-v2
+    - HalfCheetah-v2
 
 hyperparams:
   learning_rate: 0.000104019
