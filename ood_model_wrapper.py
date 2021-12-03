@@ -13,7 +13,7 @@ class OodDetectorModel:
     def __init__(self,
                  p,
                  k,
-                 distance_threshold, # TODO: Set threshold based on chi-square distribution
+                 distance_threshold_percentile, # TODO: Set threshold based on chi-square distribution
                  obs_transform_function,
                  distance_metric, # "md" or "robust-md"
                  num_actions
@@ -21,7 +21,8 @@ class OodDetectorModel:
         self.p = p # PCA input dimension
         self.k = k # PCA output dimension
         self.num_actions = num_actions
-        self.distance_threshold = distance_threshold
+        self.distance_threshold_percentile = distance_threshold_percentile
+        self.distance_threshold = 10000000
         self.obs_transform_function = obs_transform_function # A function which returns the activations of the penultimate layer
         self.distance_metric = distance_metric
         self.pca_model = PCA(n_components=k)
@@ -49,17 +50,19 @@ class OodDetectorModel:
                 self.class_means[i] = np.mean(action_observations, axis=0)
                 self.class_covariances[i] = np.cov(action_observations, rowvar=False)
 
+        self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile) # TODO: Check dimensions
+        print(f"${self.distance_threshold_percentile} percentile distance: ${self.distance_threshold}")
+
     def predict_outlier(self, obs):
         obs = self.obs_transform_function(obs).detach().cpu().numpy()
         obs = self.pca_model.transform(obs)
-        distance = self.calculate_distance(obs)
-        return distance > self.distance_threshold
+        min_distance = np.min(self.calculate_distance(obs))
+        return min_distance > self.distance_threshold
 
     def calculate_distance(self, obs):
         if self.distance_metric == "md":
             distances = [mahalanobis(obs, class_mean, VI=class_cov) for class_mean, class_cov in zip(self.class_means, self.class_covariances)]
-            min_distance = np.min(distances)
-            return min_distance
+            return distances
         else:
             raise NotImplementedError
 
@@ -68,7 +71,7 @@ class OodDetectorModel:
 
 
 class OodDetectorWrappedModel:
-    def __init__(self, policy, pretrain_timesteps, fit_outlier_detectors_every_n, k, distance_threshold, distance_metric="md"):
+    def __init__(self, policy, pretrain_timesteps, fit_outlier_detectors_every_n, k, distance_threshold_percentile, distance_metric="md"):
         self.start_time = time.time()
         self.policy = policy
         self.pretrain_timesteps = pretrain_timesteps
@@ -78,7 +81,7 @@ class OodDetectorWrappedModel:
         self.num_actions = self.policy.action_space.n
         self.p = self.policy.policy.mlp_extractor.latent_dim_pi
         self.k = k
-        self.distance_threshold = distance_threshold
+        self.distance_threshold_percentile = distance_threshold_percentile
         self.obs_transform_function = (lambda x : self.policy.policy.mlp_extractor(
                 self.policy.policy.extract_features(
                     torch.squeeze(torch.from_numpy(x), dim=1)
@@ -119,7 +122,7 @@ class OodDetectorWrappedModel:
         self.outlier_detector = OodDetectorModel(
             self.p,
             self.k,
-            self.distance_threshold,
+            self.distance_threshold_percentile,
             self.obs_transform_function,
             self.distance_metric,
             self.num_actions
@@ -162,9 +165,14 @@ class OodDetectorWrappedModel:
             self.policy._update_current_progress_remaining(self.policy.num_timesteps, total_timesteps)
 
             if (self.policy.num_timesteps == 0) or (self.policy.num_timesteps - self.last_ood_train_step >= self.fit_outlier_detectors_every_n):
+                self.last_ood_train_step = self.policy.num_timesteps
                 self.policy.logger.info(f"{self.policy.num_timesteps}: Fitting OOD detectors.")
                 self.outlier_detector.fit(self.inlier_buffer)
-                self.last_ood_train_step = self.policy.num_timesteps
+                wandb.log({
+                    "distance_threshold": self.outlier_detector.distance_threshold,
+                    "global_step": self.policy.num_timesteps
+                })
+
 
             # Figure out of current trajectory is id or ood
             buffer_range = self.temp_buffer.buffer_size if self.temp_buffer.full else self.temp_buffer.pos

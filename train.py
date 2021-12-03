@@ -92,7 +92,7 @@ def main(cfg):
             cfg.ood_detector.pretrain_timesteps,
             cfg.ood_detector.fit_outlier_detectors_every_n,
             cfg.ood_detector.k,
-            cfg.ood_detector.distance_threshold,
+            cfg.ood_detector.distance_threshold_percentile,
             cfg.ood_detector.distance_metric
         )
         model.learn(total_timesteps=cfg.total_timesteps, callback=wandb_callback)

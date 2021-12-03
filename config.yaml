@@ -11,7 +11,7 @@ ood_detector:
   pretrain_timesteps: 50000
   fit_outlier_detectors_every_n: 1000
   k: 20
-  distance_threshold: 0.5
+  distance_threshold_percentile: 0.95
   distance_metric: md
 
 ood_config:
