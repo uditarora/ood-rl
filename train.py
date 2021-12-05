@@ -89,9 +89,9 @@ def main(cfg):
     }
 
     params = {**params, **cfg.hyperparams[model_name][env_key]}
-    params.pop("n_timesteps")
-    params.pop("img_width")
-    params.pop("img_height")
+    params.pop("n_timesteps", None)
+    params.pop("img_width", None)
+    params.pop("img_height", None)
 
     # Initialize policy
     policy = ALGO_DICT[model_name](**params)
