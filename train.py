@@ -14,18 +14,15 @@ import wandb
 
 import os
 
-from stable_baselines3 import PPO, SAC, DQN, A2C, DDPG, TD3
+from stable_baselines3 import PPO, DQN, A2C
 from sb3_contrib import TQC, QRDQN, MaskablePPO
 
 from wandb.integration.sb3 import WandbCallback
 
 ALGO_DICT = {
     "PPO": PPO,
-    "SAC": SAC,
     "DQN": DQN,
     "A2C": A2C,
-    "DDPG": DDPG,
-    "TD3": TD3,
     "TQC": TQC,
     "QRDQN": QRDQN,
     "PPO_MASK": MaskablePPO,
@@ -40,10 +37,20 @@ def main(cfg):
     # initialize wandb
     os.environ["WANDB_API_KEY"] = cfg.wandb.key
 
+    model_name = cfg.model
+    env_name = cfg.env
+    env_key = env_name.replace("-", "_")
+    try:
+        policy_class = cfg.hyperparams[model_name][env_key].policy_class
+    except:
+        policy_class = "CnnPolicy" if cfg.image_input else "MlpPolicy"
+    total_timesteps = cfg.hyperparams[model_name][env_key].n_timesteps
+
     config = {
-        "policy_type": cfg.stable_baselines.policy_class,
-        "total_timesteps": cfg.total_timesteps,
-        "env_name": cfg.env,
+        "model": model_name,
+        "policy_class": policy_class,
+        "total_timesteps": total_timesteps,
+        "env_name": env_name,
     }
 
     run = wandb.init(
@@ -65,28 +72,29 @@ def main(cfg):
         check_env(env)
 
     env = Monitor(env)
-    env_name = env.spec.id
     env = DummyVecEnv([lambda: env])
 
     if cfg.image_input:
         env = VecFrameStack(env, 4)
 
     params = {
-        "policy": cfg.stable_baselines.policy_class,
+        "policy": policy_class,
         "env": env,
         "verbose": cfg.stable_baselines.verbosity,
         "tensorboard_log": f"runs/{run.id}",
     }
-    params = {**params, **cfg.hyperparams}
+
+    params = {**params, **cfg.hyperparams[model_name][env_key]}
+    params.pop("n_timesteps")
 
     # Initialize policy
-    policy = ALGO_DICT[cfg.model](**params)
+    policy = ALGO_DICT[model_name](**params)
     wandb_callback = WandbCallback(
         gradient_save_freq=100,
         verbose=2
     )
 
-    if cfg.use_ood_wrapped_model:
+    if cfg.use_ood_detector_wrapped_model:
         model = OodDetectorWrappedModel(
             policy,
             cfg.ood_detector.pretrain_timesteps,
@@ -95,14 +103,14 @@ def main(cfg):
             cfg.ood_detector.distance_threshold_percentile,
             cfg.ood_detector.distance_metric
         )
-        model.learn(total_timesteps=cfg.total_timesteps, callback=wandb_callback)
+        model.learn(total_timesteps=total_timesteps, callback=wandb_callback)
         model.eval(cfg.num_eval_rollouts, check_outlier=cfg.eval_outlier_detection)
-        model_save_filename = f"{cfg.model}_{env_name}_{run.id}"
+        model_save_filename = f"{model_name}_{env_name}_{run.id}"
         model.save(model_save_filename)
         print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
     else:
-        policy.learn(total_timesteps=cfg.total_timesteps, callback=wandb_callback)
-        model_save_filename = f"{cfg.model}_{env_name}_{run.id}"
+        policy.learn(total_timesteps=total_timesteps, callback=wandb_callback)
+        model_save_filename = f"{model_name}_{env_name}_{run.id}"
         policy.save(model_save_filename)
         print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
 

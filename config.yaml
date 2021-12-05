@@ -1,11 +1,10 @@
 model: PPO
 env: CartPole-v1
-total_timesteps: 100000
 n_frames_stack: 4
 image_input: True
 
-use_ood_wrapped_model: True
-eval_outlier_detection: True
+use_ood_detector_wrapped_model: False
+eval_outlier_detection: False
 num_eval_rollouts: 100
 ood_detector:
   pretrain_timesteps: 50000
@@ -25,20 +24,39 @@ ood_config:
     - HalfCheetah-v2
 
 hyperparams:
-  learning_rate: 0.000104019
-  n_steps: 512
-  batch_size: 32
-  n_epochs: 5
-  gamma: 0.9
-  gae_lambda: 1.0
-  clip_range: 0.3
-  ent_coef: 7.52585e-08
-  vf_coef: 0.950368
-  max_grad_norm: 0.9
+  PPO:
+    CartPole_v1:
+      n_timesteps: 1000000
+      learning_rate: 0.001
+      n_steps: 32
+      batch_size: 256
+      n_epochs: 20
+      gamma: 0.98
+      gae_lambda: 0.8
+      clip_range: 0.2
+      ent_coef: 0.0
+      vf_coef: 0.950368
+      max_grad_norm: 0.9
+  A2C:
+    CartPole_v1:
+      n_timesteps: 1000000
+      ent_coef: 0.0
+  DQN:
+    CartPole_v1:
+      n_timesteps: 1000000
+      learning_rate: 0.0023
+      batch_size: 64
+      buffer_size: 100000
+      learning_starts: 1000
+      gamma: 0.99
+      target_update_interval: 10
+      train_freq: 256
+      gradient_steps: 128
+      exploration_fraction: 0.16
+      exploration_final_eps: 0.04
 
 stable_baselines:
   verbosity: 1
-  policy_class: CnnPolicy
 
 wandb:
   entity: nyu_drl
