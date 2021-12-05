@@ -17,5 +17,5 @@ cd /scratch/$USER/ood-rl
 
 source setup_env_vars.sh
 
-python -u train.py 'env=Reacher-v2' 'hyperparams.PPO.Reacher_v2.n_timesteps=5000000' 'model=PPO' "image_input=True"
+python -u train.py 'env=Reacher-v2' 'hyperparams.PPO.Reacher_v2.n_timesteps=5000000' 'model=PPO' 'image_input=True'
 "
