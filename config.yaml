@@ -37,10 +37,26 @@ hyperparams:
       ent_coef: 0.0
       vf_coef: 0.950368
       max_grad_norm: 0.9
+    Reacher-v2:
+      n_timesteps: 3000000
+      learning_rate: 0.00003
+      n_steps: 512
+      batch_size: 64
+      n_epochs: 20
+      gamma: 0.99
+      gae_lambda: 0.9
+      clip_range: 0.4
+      ent_coef: 0.0
+      vf_coef: 0.5
+      max_grad_norm: 0.5
+      use_sde: True
   A2C:
     CartPole_v1:
       n_timesteps: 1000000
       ent_coef: 0.0
+    Reacher-v2:
+      n_timesteps: 3000000
+      learning_rate: 0.0008
   DQN:
     CartPole_v1:
       n_timesteps: 1000000
@@ -54,6 +70,8 @@ hyperparams:
       gradient_steps: 128
       exploration_fraction: 0.16
       exploration_final_eps: 0.04
+    Reacher-v2:
+      n_timesteps: 3000000
 
 stable_baselines:
   verbosity: 1
