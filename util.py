@@ -31,6 +31,7 @@ class ImageInputWrapper(ObservationWrapper):
         img = self.env.render(mode='rgb_array')
         if self.resize:
             img = self.resize_observation(img)
+        img = img / 255.0  # Normalize observations
         return img
 
     def resize_observation(self, observation):

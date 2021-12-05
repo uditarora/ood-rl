@@ -37,6 +37,8 @@ hyperparams:
       ent_coef: 0.0
       vf_coef: 0.950368
       max_grad_norm: 0.9
+      img_width: 300
+      img_height: 200
     Reacher_v2:
       n_timesteps: 3000000
       learning_rate: 0.000104019

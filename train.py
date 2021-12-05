@@ -64,7 +64,11 @@ def main(cfg):
 
     env = gym.make(cfg.env)
     if cfg.image_input:
-        env = ImageInputWrapper(env)
+        try:
+            width, height = cfg.hyperparams[model_name][env_key].img_width, cfg.hyperparams[model_name][env_key].img_height
+            env = ImageInputWrapper(env, resize=True, height=height, width=width)
+        except:
+            env = ImageInputWrapper(env)
         check_env(env)
 
     if cfg.ood_config.use:
@@ -86,6 +90,8 @@ def main(cfg):
 
     params = {**params, **cfg.hyperparams[model_name][env_key]}
     params.pop("n_timesteps")
+    params.pop("img_width")
+    params.pop("img_height")
 
     # Initialize policy
     policy = ALGO_DICT[model_name](**params)
