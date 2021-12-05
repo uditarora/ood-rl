@@ -18,16 +18,20 @@ cd /scratch/$USER/ood-rl
 source setup_env_vars.sh
 
 python -u train.py 'env=CartPole-v1' 'hyperparams.PPO.CartPole_v1.n_timesteps=5000000' 'model=PPO' 'image_input=True' \
-'~learning_rate' '~n_steps' '~batch_size' '~n_epochs' '~gamma' '~gae_lambda' '~clip_range' '~ent_coef' '~vf_coef' \
-'~max_grad_norm' &
-
-python -u train.py 'env=CartPole-v1' 'hyperparams.PPO.CartPole_v1.n_timesteps=5000000' 'model=PPO' 'image_input=True' &
-
-python -u train.py 'env=CartPole-v1' 'hyperparams.PPO.CartPole_v1.n_timesteps=5000000' 'model=PPO' 'image_input=True' \
- 'learning_rate=0.01' &
+'~hyperparams.PPO.CartPole_v1.learning_rate' '~hyperparams.PPO.CartPole_v1.n_steps' \
+'~hyperparams.PPO.CartPole_v1.batch_size' '~hyperparams.PPO.CartPole_v1.n_epochs' '~hyperparams.PPO.CartPole_v1.gamma' \
+'~hyperparams.PPO.CartPole_v1.gae_lambda' '~hyperparams.PPO.CartPole_v1.clip_range' '~hyperparams.PPO.CartPole_v1.ent_coef'\
+'~hyperparams.PPO.CartPole_v1.vf_coef' \
+'~hyperparams.PPO.CartPole_v1.max_grad_norm' 'wandb.project=$wandb_project_name' &
 
 python -u train.py 'env=CartPole-v1' 'hyperparams.PPO.CartPole_v1.n_timesteps=5000000' 'model=PPO' 'image_input=True' \
- 'learning_rate=0.0001' &
+ 'wandb.project=$wandb_project_name' &
+
+python -u train.py 'env=CartPole-v1' 'hyperparams.PPO.CartPole_v1.n_timesteps=5000000' 'model=PPO' 'image_input=True' \
+ 'hyperparams.PPO.CartPole_v1.learning_rate=0.01' 'wandb.project=$wandb_project_name' &
+
+python -u train.py 'env=CartPole-v1' 'hyperparams.PPO.CartPole_v1.n_timesteps=5000000' 'model=PPO' 'image_input=True' \
+ 'hyperparams.PPO.CartPole_v1.learning_rate=0.0001' 'wandb.project=$wandb_project_name' &
 
 wait
 "
