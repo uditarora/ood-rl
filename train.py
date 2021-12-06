@@ -94,14 +94,14 @@ def main(cfg):
         check_env(env)
 
     if cfg.ood_config.use:
-        env = OODEnv(env, cfg.ood_config)
+        env = OODEnv(env, cfg.ood_config, image_input=cfg.image_input, width=width, height=height, n_frames_stack=cfg.n_frames_stack)
         check_env(env)
 
     env = Monitor(env)
     env = DummyVecEnv([lambda: env])
 
     if cfg.image_input:
-        env = VecFrameStack(env, 4)
+        env = VecFrameStack(env, cfg.n_frames_stack)
 
     params = {
         "policy": policy_class,
