@@ -32,7 +32,7 @@ sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.PPO.Cart
 "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.PPO.CartPole_v1.n_timesteps=5000000" "model=PPO" "image_input=True" \
-"hyperparams.PPO.CartPole_v1.learning_rate=0.01" "wandb.project=$wandb_project_name" &
+"hyperparams.PPO.CartPole_v1.learning_rate=0.00001" "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.PPO.CartPole_v1.n_timesteps=5000000" "model=PPO" "image_input=True" \
 "hyperparams.PPO.CartPole_v1.learning_rate=0.0001" "wandb.project=$wandb_project_name" &
