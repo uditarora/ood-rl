@@ -28,16 +28,16 @@ sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.A2C.Cart
 "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.A2C.CartPole_v1.n_timesteps=5000000" "model=A2C" "image_input=True" \
-"hyperparams.A2C.CartPole_v1.learning_rate=0.00001" "wandb.project=$wandb_project_name" &
+"+hyperparams.A2C.CartPole_v1.learning_rate=0.00001" "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.A2C.CartPole_v1.n_timesteps=5000000" "model=A2C" "image_input=True" \
-"hyperparams.A2C.CartPole_v1.learning_rate=0.0001" "wandb.project=$wandb_project_name" &
+"+hyperparams.A2C.CartPole_v1.learning_rate=0.0001" "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.A2C.CartPole_v1.n_timesteps=5000000" "model=A2C" "image_input=True" \
-"hyperparams.A2C.CartPole_v1.learning_rate=0.001" "wandb.project=$wandb_project_name" &
+"+hyperparams.A2C.CartPole_v1.learning_rate=0.001" "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.A2C.CartPole_v1.n_timesteps=5000000" "model=A2C" "image_input=True" \
-"hyperparams.A2C.CartPole_v1.learning_rate=0.01" "wandb.project=$wandb_project_name" &
+"+hyperparams.A2C.CartPole_v1.learning_rate=0.01" "wandb.project=$wandb_project_name" &
 
 wait
 '
