@@ -51,7 +51,25 @@ def main(cfg):
         "policy_class": policy_class,
         "total_timesteps": total_timesteps,
         "env_name": env_name,
+        "image_input": cfg.image_input,
+        "n_frames_stack": cfg.n_frames_stack,
+        "use_ood_detector_wrapped_model": cfg.use_ood_detector_wrapped_model,
+        "eval_outlier_detection": cfg.eval_outlier_detection,
+        "num_eval_rollouts": cfg.num_eval_rollouts,
+        "ood_config.use": cfg.ood_config.use,
+        "ood_config.prob": cfg.ood_config.prob,
+        "ood_config.type": cfg.ood_config.type,
+        "ood_config.random_std": cfg.ood_config.random_std,
+        "ood_config.outlier_env_names": cfg.ood_config.outlier_env_names,
     }
+
+    try:
+        config.update({
+            "img_height", cfg.hyperparams[model_name][env_key].img_height,
+            "img_width", cfg.hyperparams[model_name][env_key].img_width
+        })
+    except:
+        pass
 
     run = wandb.init(
         project=cfg.wandb.project,
