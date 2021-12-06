@@ -27,4 +27,6 @@ python -u train.py "env=Reacher-v2" "hyperparams.PPO.Reacher_v2.n_timesteps=5000
 "wandb.project=$wandb_project_name" "hyperparams.PPO.Reacher_v2.learning_rate=0.001" &
 python -u train.py "env=Reacher-v2" "hyperparams.PPO.Reacher_v2.n_timesteps=5000000" "model=PPO" "image_input=True" \
 "wandb.project=$wandb_project_name" "hyperparams.PPO.Reacher_v2.learning_rate=0.00001" &
+
+wait
 '
