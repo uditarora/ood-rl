@@ -51,13 +51,19 @@ hyperparams:
       ent_coef: 7.52585e-08
       vf_coef: 0.950368
       max_grad_norm: 0.9
+      img_width: 300
+      img_height: 300
   A2C:
     CartPole_v1:
       n_timesteps: 1000000
       ent_coef: 0.0
+      img_width: 300
+      img_height: 200
     Reacher_v2:
       n_timesteps: 3000000
       learning_rate: 0.0008
+      img_width: 300
+      img_height: 300
   DQN:
     CartPole_v1:
       n_timesteps: 1000000
@@ -71,8 +77,12 @@ hyperparams:
       gradient_steps: 128
       exploration_fraction: 0.16
       exploration_final_eps: 0.04
+      img_width: 300
+      img_height: 200
     Reacher_v2:
       n_timesteps: 3000000
+      img_width: 300
+      img_height: 300
 
 stable_baselines:
   verbosity: 1
