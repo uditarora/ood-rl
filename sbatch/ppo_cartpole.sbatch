@@ -17,6 +17,8 @@ cd /scratch/$USER/ood-rl
 
 source setup_env_vars.sh
 
+set -x
+
 wandb_project_name=ppo_cartpole_baseline
 
 xvfb-run -a python -u train.py "env=CartPole-v1" "hyperparams.PPO.CartPole_v1.n_timesteps=5000000" "model=PPO" "image_input=True" \
