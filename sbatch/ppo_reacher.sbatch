@@ -6,7 +6,7 @@
 #SBATCH --export=ALL
 #SBATCH --time=23:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem=16G
+#SBATCH --mem=64G
 #SBATCH -c 8
 
 singularity exec --nv --overlay $SCRATCH/public/ood-rl-overlay.ext3:ro /scratch/work/public/singularity/cuda11.3.0-cudnn8-devel-ubuntu20.04.sif /bin/bash -c '
