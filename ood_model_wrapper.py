@@ -181,11 +181,17 @@ class OodDetectorWrappedModel:
 
             for trajectory_range in trajectory_ranges:
                 trajectory_inlier = True
+                states_inlier_status = []
                 if self.policy.num_timesteps > self.pretrain_timesteps and (not self.pretraining_done):
                     for i in range(trajectory_range[0], trajectory_range[1]):
                         obs = self.temp_buffer.observations[i]
-                        if self.outlier_detector.predict_outlier(obs):
-                            trajectory_inlier = False
+                        if self.outlier_detector.predict_outlier(obs): # TODO: Do this entire computation in 1 step
+                            states_inlier_status.append(1.0)
+                        else:
+                            states_inlier_status.append(0.0)
+
+                if np.mean(states_inlier_status) >= 0.5: # Classify trajectory as outlier if half the states are outliers
+                    trajectory_inlier = False
 
                 # Move the rollout to the proper buffer
                 if trajectory_inlier:
