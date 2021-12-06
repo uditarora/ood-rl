@@ -80,6 +80,10 @@ def main(cfg):
         save_code=True,  # optional
     )
 
+    model_save_filename = f"{model_name}_{env_name}_{run.id}"
+    model_save_path = os.path.join(os.getcwd(), f"{model_save_filename}.zip")
+    wandb.config.update({"model_save_path": model_save_path})
+
     env = gym.make(cfg.env)
     if cfg.image_input:
         try:
@@ -129,14 +133,13 @@ def main(cfg):
         )
         model.learn(total_timesteps=total_timesteps, callback=wandb_callback)
         model.eval(cfg.num_eval_rollouts, check_outlier=cfg.eval_outlier_detection)
-        model_save_filename = f"{model_name}_{env_name}_{run.id}"
         model.save(model_save_filename)
-        print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
     else:
         policy.learn(total_timesteps=total_timesteps, callback=wandb_callback)
-        model_save_filename = f"{model_name}_{env_name}_{run.id}"
         policy.save(model_save_filename)
-        print(f"Model saved to {os.getcwd()}/{model_save_filename}.zip")
+
+    # wandb.save(model_save_path)
+    print(f"Model saved to {model_save_path}")
 
     run.finish()
 
