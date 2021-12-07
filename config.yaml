@@ -26,8 +26,8 @@ ood_config:
 hyperparams:
   PPO:
     CartPole_v1:
-      n_timesteps: 1000000
-      learning_rate: 0.001
+      n_timesteps: 700000
+      learning_rate: 0.00001
       n_steps: 32
       batch_size: 256
       n_epochs: 20
@@ -40,7 +40,7 @@ hyperparams:
       img_width: 300
       img_height: 200
     Reacher_v2:
-      n_timesteps: 3000000
+      n_timesteps: 700000
       learning_rate: 0.000104019
       n_steps: 512
       batch_size: 32
@@ -56,11 +56,12 @@ hyperparams:
   A2C:
     CartPole_v1:
       n_timesteps: 1000000
+      learning_rate: 0.0001
       ent_coef: 0.0
       img_width: 300
       img_height: 200
     Reacher_v2:
-      n_timesteps: 3000000
+      n_timesteps: 700000
       learning_rate: 0.0008
       img_width: 300
       img_height: 300

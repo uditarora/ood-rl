@@ -13,7 +13,7 @@ class OodDetectorModel:
     def __init__(self,
                  p,
                  k,
-                 distance_threshold_percentile, # TODO: Set threshold based on chi-square distribution
+                 distance_threshold_percentile,
                  obs_transform_function,
                  distance_metric, # "md" or "robust-md"
                  num_actions
@@ -225,6 +225,7 @@ class OodDetectorWrappedModel:
         return self
 
     def eval(self, num_rollouts = 100, check_outlier=True):
+        # TODO: do n rollouts, retrain OOD model on the data
         self.policy.env.reset()
         self.policy.policy.set_training_mode(False)
 
