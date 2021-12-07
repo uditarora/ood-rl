@@ -65,8 +65,8 @@ def main(cfg):
 
     try:
         config.update({
-            "img_height", cfg.hyperparams[model_name][env_key].img_height,
-            "img_width", cfg.hyperparams[model_name][env_key].img_width
+            "img_height": cfg.hyperparams[model_name][env_key].img_height,
+            "img_width": cfg.hyperparams[model_name][env_key].img_width,
         })
     except:
         pass
