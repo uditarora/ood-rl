@@ -5,6 +5,8 @@ from util import ImageInputWrapper
 from stable_baselines3.common.vec_env.vec_frame_stack import VecFrameStack
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.buffers import RolloutBuffer
+#from stable_baselines3.common.buffers import DictRolloutBuffer
 
 from stable_baselines3.common.env_checker import check_env
 
@@ -72,8 +74,17 @@ def main(cfg):
         check_env(env)
 
     if cfg.ood_config.use:
-        env = OODEnv(env, cfg.ood_config)
-        check_env(env, True)#warn = True for checking if it works with stablebaselines3
+        if cfg.image_input:
+            try:
+                width, height = cfg.hyperparams[model_name][env_key].img_width, cfg.hyperparams[model_name][
+                    env_key].img_height
+                env = OODEnv(env, cfg.ood_config, image_input=cfg.image_input, height=height, width=width)
+            except:
+                width, height = 128, 128
+                env = OODEnv(env, cfg.ood_config, image_input=cfg.image_input, height=height, width=width)
+        else:
+            env = OODEnv(env, cfg.ood_config, image_input=cfg.image_input)
+        check_env(env, True)#warn = True for checking if it works with stable-baselines3
 
     env = Monitor(env)
     env = DummyVecEnv([lambda: env])
@@ -125,9 +136,27 @@ def main(cfg):
         policy.load("/scratch/ir967/drl/ood-rl/outputs/2021-12-05/19-10-00/PPO_Reacher-v2_1c1bfst4.zip",
                                             print_system_info=True)#2000000 steps trained, ep_rew_mean = -9.2
         #reset_num_timesteps=False gave issues in .learn()
+        #TRY callback = wandb_callback
         policy.learn(total_timesteps=512*20, callback=None, log_interval=1, eval_env=env, eval_freq= 512, n_eval_episodes=40,
               tb_log_name='PPO', eval_log_path="./eval_logs_"+model_save_filename+"/", reset_num_timesteps=False)
 
+        #Just collect rollouts without training
+        #https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/on_policy_algorithm.py
+        #env.device instead of "cuda" gave issues
+        #print(env.observation_space)#Box([[[0 0 0 ... 0 0 0]  [255 255 255 ... 255 255 255]]], (128, 128, 12), uint8)
+        #rb = RolloutBuffer(1000, env.observation_space, env.action_space, "cuda",
+                           # gamma=cfg.hyperparams[model_name][env_key].gamma,
+                           # gae_lambda=cfg.hyperparams[model_name][env_key].gae_lambda,
+                           # n_envs=1)
+        #policy.env.reset()
+        #if policy._last_obs is None:
+        #    policy._last_obs = policy.env.reset()  # pytype: disable=annotation-type-mismatch
+        #policy.learn(total_timesteps=512*1, callback=None, log_interval=1, eval_env=env, eval_freq= 512, n_eval_episodes=40,
+        #    tb_log_name='PPO', eval_log_path="./eval_logs_"+model_save_filename+"/", reset_num_timesteps=False)
+        #observation, reward, done, info = env.step(env.action_space.sample())
+        #print(observation.shape)#(1, 128, 128, 12)
+        #wandb_callback.init_callback(policy)
+        #rollout = policy.collect_rollouts(env, callback = wandb_callback, rollout_buffer = rb, n_rollout_steps = 1000)#n_rollout_steps = 1000
     run.finish()
 
 if __name__ == '__main__':
