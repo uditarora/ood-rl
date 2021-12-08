@@ -22,23 +22,24 @@ set -x
 wandb_project_name=reacher_experiments
 
 # Task ood (Train with ood, without ood_detection)
-python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
+
+xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.05" "ood_config.type=task" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
+sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.1" "ood_config.type=task" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
+sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.5" "ood_config.type=task" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
+sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.9" "ood_config.type=task" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
+sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=1.0" "ood_config.type=task" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
