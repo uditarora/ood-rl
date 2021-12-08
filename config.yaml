@@ -16,6 +16,7 @@ ood_detector:
 ood_config:
   use: False
   prob: 0.05
+  ood_state_prob: 0.7
   type: task
   random_std: 0.01
   outlier_env_names:

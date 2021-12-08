@@ -88,7 +88,7 @@ class OODEnv(gym.Env):
 
     def observation(self, observation=None):
         self.state_count += 1
-        if self.is_current_trajectory_ood and random.random() < 0.6: # TODO: make this a config
+        if self.is_current_trajectory_ood and random.random() < self.ood_config.ood_state_prob:
             self.ood_state_count += 1
             if self.ood_config.type == "background": # BG shift
                 if len(self.bg_shift_envs) > 0:
