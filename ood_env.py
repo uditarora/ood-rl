@@ -31,10 +31,39 @@ class OODEnv(ObservationWrapper):
         self.base_env = base_env
         self.ood_config = ood_config
         self.outlier_envs = [gym.make(outlier_env_name) for outlier_env_name in ood_config.outlier_env_names]
-        if(image_input):
-            self.outlier_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in self.outlier_envs]
+        self.bg_shift_envs = []
+        if self.ood_config.type == "background":
+            self.bg_shift_envs = [gym.make(base_env.unwrapped.spec.id) for i in range(4)]
+            print("Background shift environments initiated. Count: " + str(len(self.bg_shift_envs)))
+            for i in range(4):
+                m = self.bg_shift_envs[i].model
+                if base_env.unwrapped.spec.id != 'Reacher-v2':
+                    raise Exception("Background changes are currently implemented only for the environment 'Reacher-v2'")
+                m.mat_texid[m.geom_matid[m.geom_name2id("ground")]] = i + 1 #0 stands for no texture according to our reacher.xml
+        
+        if (image_input):
+            self.outlier_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
+                                 self.outlier_envs]
+            self.bg_shift_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
+                                 self.bg_shift_envs]
+        
 
     def observation(self, observation=None):
-        if random.random() < self.ood_config.prob:
-            observation = generate_ood(self.ood_config, self.outlier_envs, observation)
+        if self.ood_config.use:
+            if self.ood_config.type == "background":
+                if len(self.bg_shift_envs) > 0:
+                    if random.random() < self.ood_config.prob:
+                        #shift the .png file used as texture for the "ground" geom in reacher.xml of gym
+                        i =  random.randrange(0, len(self.bg_shift_envs))
+                        #self.bg_shift_envs[i].reset()
+                        #CHANGE THIS LATER
+                        #random action: env.action_space.sample()
+                        #observation, reward, done, info = self.bg_shift_envs[i].step(self.bg_shift_envs[i].action_space.sample())
+                        #observation = self.bg_shift_envs[i].observation()
+                        self.bg_shift_envs[i].render(mode='rgb_array')
+                else:
+                    raise Exception("No background shift environments were initiated successfully.")
+            else:#random noise
+                if random.random() < self.ood_config.prob:
+                    observation = generate_ood(self.ood_config, self.outlier_envs, observation)
         return observation
