@@ -1,6 +1,6 @@
 model: PPO
 env: CartPole-v1
-n_frames_stack: 4
+n_frames_stack: 1
 image_input: True
 
 use_ood_detector_wrapped_model: False
