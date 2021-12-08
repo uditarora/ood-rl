@@ -1,6 +1,8 @@
 import gym
 import random
 import numpy as np
+import wandb
+
 from util import ImageInputWrapper
 
 
@@ -16,6 +18,11 @@ class OODEnv(gym.Env):
         self.action_space = self.base_env.action_space
         self.reward_range = self.base_env.reward_range
         self.is_current_trajectory_ood = False
+
+        self.trajectory_count = 0
+        self.ood_trajectory_count = 0
+        self.state_count = 0
+        self.ood_state_count = 0
 
         # Task shift
         self.outlier_envs = []
@@ -46,9 +53,21 @@ class OODEnv(gym.Env):
         return (self.observation(observation), reward, done, info,)
 
     def reset(self):
+        self.trajectory_count += 1
         self.is_current_trajectory_ood = False
         if self.ood_config.use and random.random() < self.ood_config.prob:
             self.is_current_trajectory_ood = True
+            self.ood_trajectory_count += 1
+
+        wandb.log({
+            "state_count": self.state_count,
+            "trajectory_count": self.trajectory_count,
+            "ood_trajectory_count": self.ood_trajectory_count,
+            "ood_state_count": self.ood_state_count,
+            "ood_state_percentage": 0 if self.state_count==0 else (self.ood_state_count / self.state_count),
+            "ood_trajectory_percentage": 0 if self.trajectory_count==0 else (self.ood_trajectory_count / self.trajectory_count),
+        })
+
         return self.observation(self.base_env.reset())
 
     def close(self):
@@ -62,7 +81,9 @@ class OODEnv(gym.Env):
         [env.seed(seed) for env in self.bg_shift_envs]
 
     def observation(self, observation=None):
+        self.state_count += 1
         if self.is_current_trajectory_ood and random.random() < 0.6: # TODO: make this a config
+            self.ood_state_count += 1
             if self.ood_config.type == "background": # BG shift
                 if len(self.bg_shift_envs) > 0:
                     if random.random() < self.ood_config.prob:
