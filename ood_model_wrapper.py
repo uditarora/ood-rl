@@ -51,7 +51,7 @@ class OodDetectorModel:
                 self.class_covariances[i] = np.cov(action_observations, rowvar=False)
 
         self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile) # TODO: Check dimensions
-        print(f"${self.distance_threshold_percentile} percentile distance: ${self.distance_threshold}")
+        print(f"{self.distance_threshold_percentile} percentile distance: {self.distance_threshold}")
 
     def predict_outlier(self, obs):
         obs = self.obs_transform_function(obs).detach().cpu().numpy()
@@ -127,6 +127,7 @@ class OodDetectorWrappedModel:
             self.distance_metric,
             self.num_actions
         )
+        self.outlier_detector.fit(self.temp_buffer)
 
     def learn(self,
             total_timesteps,
@@ -181,16 +182,16 @@ class OodDetectorWrappedModel:
 
             for trajectory_range in trajectory_ranges:
                 trajectory_inlier = True
-                states_inlier_status = []
+                states_outlier_status = []
                 if self.policy.num_timesteps > self.pretrain_timesteps and (not self.pretraining_done):
                     for i in range(trajectory_range[0], trajectory_range[1]):
                         obs = self.temp_buffer.observations[i]
                         if self.outlier_detector.predict_outlier(obs): # TODO: Do this entire computation in 1 step
-                            states_inlier_status.append(1.0)
+                            states_outlier_status.append(1.0)
                         else:
-                            states_inlier_status.append(0.0)
+                            states_outlier_status.append(0.0)
 
-                if np.mean(states_inlier_status) >= 0.5: # Classify trajectory as outlier if half the states are outliers
+                if np.mean(states_outlier_status) >= 0.5: # Classify trajectory as outlier if half the states are outliers
                     trajectory_inlier = False
 
                 # Move the rollout to the proper buffer
