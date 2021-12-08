@@ -100,7 +100,7 @@ class OODEnv(gym.Env):
                         #random action: env.action_space.sample()
                         #observation, reward, done, info = self.bg_shift_envs[i].step(self.bg_shift_envs[i].action_space.sample())
                         #observation = self.bg_shift_envs[i].observation()
-                        self.bg_shift_envs[i].render(mode='rgb_array')
+                        observation = self.bg_shift_envs[i].render(mode='rgb_array')
                 else:
                     raise Exception("No background shift environments were initiated successfully.")
             elif self.ood_config.type == "random":# random shift
