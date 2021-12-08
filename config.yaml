@@ -53,6 +53,20 @@ hyperparams:
       max_grad_norm: 0.9
       img_width: 300
       img_height: 300
+    Pendulum_v0:
+      n_timesteps: 100
+      learning_rate: 0.00001
+      n_steps: 32
+      batch_size: 256
+      n_epochs: 20
+      gamma: 0.98
+      gae_lambda: 0.8
+      clip_range: 0.2
+      ent_coef: 0.0
+      vf_coef: 0.950368
+      max_grad_norm: 0.9
+      img_width: 300
+      img_height: 200
   A2C:
     CartPole_v1:
       n_timesteps: 1000000

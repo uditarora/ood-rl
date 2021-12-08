@@ -28,8 +28,12 @@ class OodDetectorModel:
         self.distance_metric = distance_metric
         self.pca_model = PCA(n_components=k)
 
-        self.class_means = [np.zeros(k) for _ in range(num_actions)]
-        self.class_covariances = [np.zeros((k, k)) for _ in range(num_actions)]
+        if self.num_actions == 1:
+            self.class_means = np.zeros(k)
+            self.class_covariances = np.zeros((k, k))
+        else:
+            self.class_means = [np.zeros(k) for _ in range(num_actions)]
+            self.class_covariances = [np.zeros((k, k)) for _ in range(num_actions)]
 
     def fit(self, buffer:DictRolloutBuffer):
         buffer_range = buffer.buffer_size if buffer.full else buffer.pos
@@ -42,16 +46,22 @@ class OodDetectorModel:
         self.pca_model.fit(
             self.obs_transform_function(observations).detach().cpu().numpy()
         )
+
         observations = self.pca_model.transform(self.obs_transform_function(observations).detach().cpu().numpy())
-        actions = buffer.actions
-        observations_per_action = [[observations[i] for i in range(observations.shape[0]) if actions[i]==action] for action in range(self.num_actions)]
 
-        for i, action_observations in enumerate(observations_per_action):
-            if action_observations:
-                self.class_means[i] = np.mean(action_observations, axis=0)
-                self.class_covariances[i] = np.cov(action_observations, rowvar=False)
+        if self.num_actions == 1:
+            self.class_means = np.mean(observations, axis=0)
+            self.class_covariances = np.cov(observations, rowvar=False)
+        else:
+            actions = buffer.actions
+            observations_per_action = [[observations[i] for i in range(observations.shape[0]) if actions[i] == action]
+                                       for action in range(self.num_actions)]
+            for i, action_observations in enumerate(observations_per_action):
+                if action_observations:
+                    self.class_means[i] = np.mean(action_observations, axis=0)
+                    self.class_covariances[i] = np.cov(action_observations, rowvar=False)
 
-        self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile) # TODO: Check dimensions
+        self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile)
         print(f"{self.distance_threshold_percentile} percentile distance: {self.distance_threshold}")
 
     def predict_outlier(self, obs):
@@ -62,7 +72,10 @@ class OodDetectorModel:
 
     def calculate_distance(self, obs):
         if self.distance_metric == "md":
-            distances = [mahalanobis(obs, class_mean, VI=class_cov) for class_mean, class_cov in zip(self.class_means, self.class_covariances)]
+            if self.num_actions == 1:
+                distances = [mahalanobis(obs, self.class_means, VI=self.class_covariances)]
+            else:
+                distances = [mahalanobis(obs, class_mean, VI=class_cov) for class_mean, class_cov in zip(self.class_means, self.class_covariances)]
             return distances
         else:
             raise NotImplementedError
@@ -79,7 +92,7 @@ class OodDetectorWrappedModel:
         self.pretraining_done = False
         self.last_ood_train_step = 0
         self.fit_outlier_detectors_every_n = fit_outlier_detectors_every_n
-        self.num_actions = self.policy.action_space.n
+        self.num_actions = self.policy.action_space.n if isinstance(self.policy.action_space, gym.spaces.Discrete) else 1
         self.p = self.policy.policy.mlp_extractor.latent_dim_pi
         self.k = k
         self.distance_threshold_percentile = distance_threshold_percentile
