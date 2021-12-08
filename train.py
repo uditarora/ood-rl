@@ -61,6 +61,7 @@ def main(cfg):
         "ood_config.type": cfg.ood_config.type,
         "ood_config.random_std": cfg.ood_config.random_std,
         "ood_config.outlier_env_names": cfg.ood_config.outlier_env_names,
+        "ood_config.ood_state_prob": cfg.ood_config.ood_state_prob,
     }
 
     try:
