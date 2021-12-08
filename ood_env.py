@@ -5,6 +5,12 @@ import wandb
 
 from util import ImageInputWrapper
 
+# import matplotlib.pyplot as plt # Useful for debugging
+#
+# def render_image(img):
+#     plt.imshow(img)
+#     plt.plot()
+#     plt.show()
 
 class OODEnv(gym.Env):
     '''
@@ -99,8 +105,10 @@ class OODEnv(gym.Env):
                     raise Exception("No background shift environments were initiated successfully.")
             elif self.ood_config.type == "random":# random shift
                 observation = self.generate_random_ood(self.ood_config.random_std, observation)
-            else: # Task shift
+            elif self.ood_config.type == "task": # Task shift
                 observation = self.generate_task_shift_ood(self.outlier_envs)
+            elif self.ood_config.type == "blackout":
+                observation = np.zeros(observation.shape).astype(float)
 
         return observation
 
