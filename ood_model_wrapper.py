@@ -96,9 +96,10 @@ class OodDetectorWrappedModel:
         self.p = self.policy.policy.mlp_extractor.latent_dim_pi
         self.k = k
         self.distance_threshold_percentile = distance_threshold_percentile
+        self.device = self.policy.device
         self.obs_transform_function = (lambda x : self.policy.policy.mlp_extractor(
                 self.policy.policy.extract_features(
-                    torch.squeeze(torch.from_numpy(x), dim=1)
+                    torch.squeeze(torch.from_numpy(x).to(self.device), dim=1)
                 )
             )[0]
         )
