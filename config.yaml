@@ -68,6 +68,34 @@ hyperparams:
       max_grad_norm: 0.9
       img_width: 300
       img_height: 200
+    Ant_v2:
+      n_timesteps: 700000
+      learning_rate: 0.000104019
+      n_steps: 512
+      batch_size: 32
+      n_epochs: 5
+      gamma: 0.9
+      gae_lambda: 1.0
+      clip_range: 0.3
+      ent_coef: 7.52585e-08
+      vf_coef: 0.950368
+      max_grad_norm: 0.9
+      img_width: 300
+      img_height: 300
+    Hopper_v2:
+      n_timesteps: 700000
+      learning_rate: 0.000104019
+      n_steps: 512
+      batch_size: 32
+      n_epochs: 5
+      gamma: 0.9
+      gae_lambda: 1.0
+      clip_range: 0.3
+      ent_coef: 7.52585e-08
+      vf_coef: 0.950368
+      max_grad_norm: 0.9
+      img_width: 300
+      img_height: 300
   A2C:
     CartPole_v1:
       n_timesteps: 1000000
