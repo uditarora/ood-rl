@@ -44,8 +44,9 @@ class OODEnv(ObservationWrapper):
         if (image_input):
             self.outlier_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
                                  self.outlier_envs]
-            self.bg_shift_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
-                                 self.bg_shift_envs]
+            if self.ood_config.type == "background":
+                self.bg_shift_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
+                                      self.bg_shift_envs]
         
 
     def observation(self, observation=None):
