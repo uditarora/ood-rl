@@ -8,6 +8,7 @@ from scipy.spatial.distance import mahalanobis
 import time
 from stable_baselines3.common.utils import safe_mean
 from util import CircularRolloutBuffer, CircularDictRolloutBuffer
+from util import NoopCallback
 
 class OodDetectorModel:
     def __init__(self,
@@ -109,6 +110,16 @@ class OodDetectorWrappedModel:
         # This buffer is used to collect data. The data is then moved to the inlier/outlier buffer.
         self.temp_buffer = temp_buffer_cls(
             self.policy.n_steps,
+            self.policy.observation_space,
+            self.policy.action_space,
+            self.policy.device,
+            gamma=self.policy.gamma,
+            gae_lambda=self.policy.gae_lambda,
+            n_envs=self.policy.n_envs,
+        )
+
+        self.eval_buffer = temp_buffer_cls(
+            5000,
             self.policy.observation_space,
             self.policy.action_space,
             self.policy.device,
@@ -226,10 +237,15 @@ class OodDetectorWrappedModel:
         return self
 
     def eval(self, num_rollouts = 100, check_outlier=True):
-        # TODO: do n rollouts, retrain OOD model on the data
-        self.policy.env.reset()
         self.policy.policy.set_training_mode(False)
 
+        # Mean and covariance estimation
+        self.eval_buffer.reset()
+        self.policy.collect_rollouts(self.policy.env, NoopCallback(), self.eval_buffer, n_rollout_steps=3000)
+        self.outlier_detector.fit(self.eval_buffer)
+
+        # Detection
+        self.policy.env.reset()
         rollout_returns = [0 for _ in range(num_rollouts)]
         for rollout_idx in range(num_rollouts):
             rollout_return = 0.0
@@ -247,6 +263,7 @@ class OodDetectorWrappedModel:
             rollout_returns[rollout_idx] = rollout_return
 
         mean_return = np.mean(rollout_returns)
+        print(f"Eval mean return: {mean_return}")
         wandb.log({
             "eval_mean_return": mean_return,
             "global_step": self.policy.num_timesteps

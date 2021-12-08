@@ -5,6 +5,7 @@ from stable_baselines3.common.buffers import RolloutBuffer, DictRolloutBuffer
 from PIL import Image
 import torch
 from gym import spaces
+from stable_baselines3.common.callbacks import BaseCallback
 
 class ImageInputWrapper(ObservationWrapper):
     resize = True
@@ -127,3 +128,58 @@ class CircularDictRolloutBuffer(DictRolloutBuffer):
         if self.pos == self.buffer_size:
             self.full = True
             self.pos = 0
+
+
+class NoopCallback(BaseCallback):
+    """
+    Base class for callback.
+
+    :param verbose:
+    """
+
+    def __init__(self, verbose: int = 0):
+        super(BaseCallback, self).__init__()
+
+    def init_callback(self, model) -> None:
+        pass
+
+    def _init_callback(self) -> None:
+        pass
+
+    def on_training_start(self, locals_) -> None:
+        # Those are reference and will be updated automatically
+        pass
+
+    def _on_training_start(self) -> None:
+        pass
+
+    def on_rollout_start(self) -> None:
+        pass
+
+    def _on_rollout_start(self) -> None:
+        pass
+
+    def _on_step(self) -> bool:
+        return True
+
+    def on_step(self) -> bool:
+
+        return self._on_step()
+
+    def on_training_end(self) -> None:
+        self._on_training_end()
+
+    def _on_training_end(self) -> None:
+        return True
+
+    def on_rollout_end(self) -> None:
+        self._on_rollout_end()
+
+    def _on_rollout_end(self) -> None:
+        return True
+
+    def update_locals(self, locals_) -> None:
+        pass
+
+    def update_child_locals(self, locals_) -> None:
+        pass
