@@ -26,31 +26,31 @@ wandb_project_name=reacher_experiments
 sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.05" "ood_config.type=task" "use_ood_detector_wrapped_model=True" \
 "ood_detector.pretrain_timesteps=70000" "ood_detector.fit_outlier_detectors_every_n=2000" \
-"ood_config.outlier_env_names:[Ant-v2,Swimmer-v2,Hopper-v2]" \
+"ood_config.outlier_env_names=[Ant-v2,Swimmer-v2,Hopper-v2]" \
 "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.1" "ood_config.type=task" "use_ood_detector_wrapped_model=True" \
 "ood_detector.pretrain_timesteps=70000" "ood_detector.fit_outlier_detectors_every_n=2000" \
-"ood_config.outlier_env_names:[Ant-v2,Swimmer-v2,Hopper-v2]" \
+"ood_config.outlier_env_names=[Ant-v2,Swimmer-v2,Hopper-v2]" \
 "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.5" "ood_config.type=task" "use_ood_detector_wrapped_model=True" \
 "ood_detector.pretrain_timesteps=70000" "ood_detector.fit_outlier_detectors_every_n=2000" \
-"ood_config.outlier_env_names:[Ant-v2,Swimmer-v2,Hopper-v2]" \
+"ood_config.outlier_env_names=[Ant-v2,Swimmer-v2,Hopper-v2]" \
 "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=0.9" "ood_config.type=task" "use_ood_detector_wrapped_model=True" \
 "ood_detector.pretrain_timesteps=70000" "ood_detector.fit_outlier_detectors_every_n=2000" \
-"ood_config.outlier_env_names:[Ant-v2,Swimmer-v2,Hopper-v2]" \
+"ood_config.outlier_env_names=[Ant-v2,Swimmer-v2,Hopper-v2]" \
 "wandb.project=$wandb_project_name" &
 
 sleep 10; xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=1.0" "ood_config.type=task" "use_ood_detector_wrapped_model=True" \
 "ood_detector.pretrain_timesteps=70000" "ood_detector.fit_outlier_detectors_every_n=2000" \
-"ood_config.outlier_env_names:[Ant-v2,Swimmer-v2,Hopper-v2]" \
+"ood_config.outlier_env_names=[Ant-v2,Swimmer-v2,Hopper-v2]" \
 "wandb.project=$wandb_project_name" &
 
 wait
