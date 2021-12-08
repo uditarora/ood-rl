@@ -24,19 +24,27 @@ wandb_project_name=sanity_check
 # Task ood (Train with ood, without ood_detection)
 
 xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
+"ood_config.use=False" "ood_config.prob=1.0" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
+"wandb.project=$wandb_project_name" &
+
+xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
 "ood_config.use=True" "ood_config.prob=1.0" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
-"ood_config.use=True" "ood_config.prob=0.9" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
+xvfb-run -a python -u train.py "env=Ant-v2" "model=PPO" "image_input=True" \
+"ood_config.use=False" "ood_config.prob=1.0" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
-"ood_config.use=True" "ood_config.prob=0.8" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
+xvfb-run -a python -u train.py "env=Ant-v2" "model=PPO" "image_input=True" \
+"ood_config.use=True" "ood_config.prob=1.0" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
-xvfb-run -a python -u train.py "env=Reacher-v2" "model=PPO" "image_input=True" \
-"ood_config.use=True" "ood_config.prob=0.1" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
+xvfb-run -a python -u train.py "env=Hopper-v2" "model=PPO" "image_input=True" \
+"ood_config.use=False" "ood_config.prob=1.0" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
+"wandb.project=$wandb_project_name" &
+
+xvfb-run -a python -u train.py "env=Hopper-v2" "model=PPO" "image_input=True" \
+"ood_config.use=True" "ood_config.prob=1.0" "ood_config.type=blackout" "ood_config.ood_state_prob=1.0" "use_ood_detector_wrapped_model=False" \
 "wandb.project=$wandb_project_name" &
 
 wait
