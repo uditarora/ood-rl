@@ -28,7 +28,7 @@ hyperparams:
   PPO:
     CartPole_v1:
       n_timesteps: 700000
-      learning_rate: 0.00001
+      learning_rate: 0.001
       n_steps: 32
       batch_size: 256
       n_epochs: 20
@@ -36,8 +36,6 @@ hyperparams:
       gae_lambda: 0.8
       clip_range: 0.2
       ent_coef: 0.0
-      vf_coef: 0.950368
-      max_grad_norm: 0.9
       img_width: 300
       img_height: 200
     Reacher_v2:
