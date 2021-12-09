@@ -20,9 +20,9 @@ ood_config:
   type: task
   random_std: 0.01
   outlier_env_names:
-    - CartPole-v1
-    - Ant-v2
-    - HalfCheetah-v2
+    - Acrobot-v1
+    - MountainCar-v0
+    - Pendulum-v0
 
 hyperparams:
   PPO:

@@ -3,25 +3,24 @@ import random
 import numpy as np
 import wandb
 
-# CartPole-v1: Box(4)
-# Acrobot-v1: Box(6)
-# MountainCar-v0: Box(2)
-# Pendulum-v0: Box(3)
+from util import ImageInputWrapper
 
-# Padded: Box(8)
+# import matplotlib.pyplot as plt # Useful for debugging
+#
+# def render_image(img):
+#     plt.imshow(img)
+#     plt.plot()
+#     plt.show()
 
-PADDED_SIZE = 8
-
-class OODEnv(gym.Env):
+class OODEnvImage(gym.Env):
     '''
     A wrapper over a standard gym environment that provides OOD states
     upon executing step with a given probability.
     '''
-    def __init__(self, base_env, ood_config):
+    def __init__(self, base_env, ood_config, image_input=False, width=300, height=300, n_frames_stack=4):
         self.base_env = base_env
         self.ood_config = ood_config
         self.observation_space = self.base_env.observation_space
-        self.padding_size = PADDED_SIZE - self.observation_space.shape[0]
         self.action_space = self.base_env.action_space
         self.reward_range = self.base_env.reward_range
         self.is_current_trajectory_ood = False
@@ -35,6 +34,25 @@ class OODEnv(gym.Env):
         self.outlier_envs = []
         if self.ood_config.type == "task":
             self.outlier_envs = [gym.make(outlier_env_name) for outlier_env_name in ood_config.outlier_env_names]
+
+        # BG shift
+        self.bg_shift_envs = []
+        if self.ood_config.type == "background":
+            self.bg_shift_envs = [gym.make(base_env.unwrapped.spec.id) for i in range(4)]
+            print("Background shift environments initiated. Count: " + str(len(self.bg_shift_envs)))
+            for i in range(4):
+                m = self.bg_shift_envs[i].model
+                if base_env.unwrapped.spec.id != 'Reacher-v2':
+                    raise Exception("Background changes are currently implemented only for the environment 'Reacher-v2'")
+                m.mat_texid[m.geom_matid[m.geom_name2id("ground")]] = i + 1 #0 stands for no texture according to our reacher.xml
+        
+        if image_input:
+            if self.ood_config.type == "task":
+                self.outlier_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
+                                 self.outlier_envs]
+            if self.ood_config.type == "background":
+                self.bg_shift_envs = [ImageInputWrapper(env, resize=True, height=height, width=width) for env in
+                                      self.bg_shift_envs]
 
     def step(self, action):
         observation, reward, done, info = self.base_env.step(action)
@@ -61,28 +79,30 @@ class OODEnv(gym.Env):
     def close(self):
         self.base_env.close()
         [env.close() for env in self.outlier_envs]
+        [env.close() for env in self.bg_shift_envs]
 
     def seed(self, seed=None):
         self.base_env.seed(seed)
         [env.seed(seed) for env in self.outlier_envs]
-
-    def pad(self, observation):
-        '''
-        Pad observation to final state space size.
-        Padding is sampled from Uniform(0,1).
-        '''
-        padding_size = PADDED_SIZE - observation.shape[0]
-        padding = np.random.random(padding_size)
-        return np.concatenate((observation, padding), axis=0)
+        [env.seed(seed) for env in self.bg_shift_envs]
 
     def observation(self, observation=None):
         self.state_count += 1
-        observation = self.pad(observation)
-
         if self.is_current_trajectory_ood and random.random() < self.ood_config.ood_state_prob:
             self.ood_state_count += 1
             if self.ood_config.type == "background": # BG shift
-                observation = self.generate_bg_shift_ood(observation)
+                if len(self.bg_shift_envs) > 0:
+                    if random.random() < self.ood_config.prob:
+                        #shift the .png file used as texture for the "ground" geom in reacher.xml of gym
+                        i =  random.randrange(0, len(self.bg_shift_envs))
+                        #self.bg_shift_envs[i].reset()
+                        #CHANGE THIS LATER
+                        #random action: env.action_space.sample()
+                        observation, reward, done, info = self.bg_shift_envs[i].step(self.bg_shift_envs[i].action_space.sample())
+                        #observation = self.bg_shift_envs[i].observation()
+                        #observation = self.bg_shift_envs[i].render(mode='rgb_array')
+                else:
+                    raise Exception("No background shift environments were initiated successfully.")
             elif self.ood_config.type == "random":# random shift
                 observation = self.generate_random_ood(self.ood_config.random_std, observation)
             elif self.ood_config.type == "task": # Task shift
@@ -96,12 +116,4 @@ class OODEnv(gym.Env):
         return np.clip(state + np.random.normal(0, random_std, state.shape), a_min=0.0, a_max=1.0).astype(float)
 
     def generate_task_shift_ood(self, outlier_envs):
-        observation = random.choice(outlier_envs).reset()
-        return self.pad(observation)
-
-    def generate_bg_shift_ood(self, observation):
-        '''
-        Generate background shift by changing the distribution of padded values from uniform to gaussian.
-        '''
-        observation[self.observation_space.shape[0]:] = np.random.randn(self.padding_size)
-        return observation
+        return random.choice(outlier_envs).reset()
