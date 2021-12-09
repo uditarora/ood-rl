@@ -86,6 +86,7 @@ def main(cfg):
     wandb.config.update({"model_save_path": model_save_path})
 
     env = gym.make(cfg.env)
+    width, height = 300, 300
     if cfg.image_input:
         try:
             width, height = cfg.hyperparams[model_name][env_key].img_width, cfg.hyperparams[model_name][env_key].img_height
