@@ -110,5 +110,5 @@ class OODEnv(gym.Env):
         '''
         Generate background shift by changing the distribution of padded values from uniform to gaussian.
         '''
-        observation[self.observation_space.shape[0]:] = np.random.randn(self.padding_size)
+        observation[self.base_env.observation_space.shape[0]:] = np.random.randn(self.padding_size)
         return observation
