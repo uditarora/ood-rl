@@ -1,4 +1,4 @@
-model_path: /Users/sjha/Documents/NYU/DRL/ood-rl/outputs/2021-12-09/21-31-05/PPO_CartPole-v1_17cllu67
+model_path: /Users/sjha/Documents/NYU/DRL/ood-rl/outputs/2021-12-09/21-52-14/PPO_CartPole-v1_22m5eyje
 env: CartPole-v1
 model: PPO
 k: 20

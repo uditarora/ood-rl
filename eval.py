@@ -68,11 +68,12 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
         rollout_return = 0.0
         observation = env.reset()
         action = policy.action_space.sample()
-        for timestep in range(policy.n_steps):
+        done = False
+        while not done:
             if (not check_outlier) or (not outlier_detector.predict_outlier(observation)):
                 action = policy.policy.forward(torch.from_numpy(observation))[0].detach().cpu().numpy()
             observation, reward, done, info = env.step(action)
-            rollout_return += reward
+            rollout_return += reward[0]
             if done:
                 break
 
