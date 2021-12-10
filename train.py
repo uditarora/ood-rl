@@ -2,6 +2,7 @@ import gym
 import hydra
 from ood_env import OODEnv
 from util import ImageInputWrapper
+import numpy as np
 from stable_baselines3.common.vec_env.vec_frame_stack import VecFrameStack
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.monitor import Monitor
@@ -86,17 +87,8 @@ def main(cfg):
     wandb.config.update({"model_save_path": model_save_path})
 
     env = gym.make(cfg.env)
-    width, height = 300, 300
-    if cfg.image_input:
-        try:
-            width, height = cfg.hyperparams[model_name][env_key].img_width, cfg.hyperparams[model_name][env_key].img_height
-            env = ImageInputWrapper(env, resize=True, height=height, width=width)
-        except:
-            env = ImageInputWrapper(env)
-        check_env(env)
-
     if cfg.ood_config.use:
-        env = OODEnv(env, cfg.ood_config, image_input=cfg.image_input, width=width, height=height, n_frames_stack=cfg.n_frames_stack)
+        env = OODEnv(env, cfg.ood_config)
         check_env(env)
 
     env = Monitor(env)

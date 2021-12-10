@@ -2,6 +2,7 @@ import gym
 import random
 import numpy as np
 import wandb
+from gym import spaces
 
 # CartPole-v1: Box(4)
 # Acrobot-v1: Box(6)
@@ -20,8 +21,11 @@ class OODEnv(gym.Env):
     def __init__(self, base_env, ood_config):
         self.base_env = base_env
         self.ood_config = ood_config
-        self.observation_space = self.base_env.observation_space
-        self.padding_size = PADDED_SIZE - self.observation_space.shape[0]
+        self.padding_size = PADDED_SIZE - self.base_env.observation_space.shape[0]
+        low = np.append(self.base_env.observation_space.low, np.array([-3.4e38 for x in range(self.padding_size)]))
+        high = np.append(self.base_env.observation_space.high, np.array([+3.4e38 for x in range(self.padding_size)]))
+        self.observation_space = spaces.Box(low, high, dtype=np.float32)
+
         self.action_space = self.base_env.action_space
         self.reward_range = self.base_env.reward_range
         self.is_current_trajectory_ood = False

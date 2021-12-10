@@ -28,7 +28,7 @@ hyperparams:
   PPO:
     CartPole_v1:
       n_timesteps: 700000
-      learning_rate: 0.001
+      learning_rate: 0.0001
       n_steps: 32
       batch_size: 256
       n_epochs: 20
