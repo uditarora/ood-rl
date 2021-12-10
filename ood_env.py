@@ -22,9 +22,9 @@ class OODEnv(gym.Env):
         self.base_env = base_env
         self.ood_config = ood_config
         self.padding_size = PADDED_SIZE - self.base_env.observation_space.shape[0]
-        low = np.append(self.base_env.observation_space.low, np.array([-3.4e38 for x in range(self.padding_size)]))
-        high = np.append(self.base_env.observation_space.high, np.array([+3.4e38 for x in range(self.padding_size)]))
-        self.observation_space = spaces.Box(low, high, dtype=np.float32)
+        low = np.array([-3.4e38 for x in range(PADDED_SIZE)])
+        high = np.array([+3.4e38 for x in range(PADDED_SIZE)])
+        self.observation_space = spaces.Box(low, high, dtype=self.base_env.observation_space.dtype)
 
         self.action_space = self.base_env.action_space
         self.reward_range = self.base_env.reward_range

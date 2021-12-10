@@ -105,6 +105,10 @@ def main(cfg):
     }
 
     params = {**params, **cfg.hyperparams[model_name][env_key]}
+    try:
+        params['policy_kwargs'] = eval(params['policy_kwargs'])
+    except:
+        pass
     params.pop("n_timesteps", None)
     params.pop("img_width", None)
     params.pop("img_height", None)

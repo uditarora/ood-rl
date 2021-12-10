@@ -1,17 +1,18 @@
-model_path: /Users/sjha/Documents/NYU/DRL/ood-rl/outputs/2021-12-09/21-52-14/PPO_CartPole-v1_22m5eyje
+model_path: /Users/sjha/Documents/NYU/DRL/ood-rl/outputs/2021-12-10/12-23-29/PPO_CartPole-v1_3eyhshx4
 env: CartPole-v1
 model: PPO
 k: 20
 n_frames_stack: 1
 image_input: True
+distance_threshold_percentile: 0.95
 
 use_ood_detector_wrapped_model: False
-eval_outlier_detection: False
+eval_outlier_detection: True
 num_eval_rollouts: 100
 
 ood_config:
-  use: False
-  prob: 0.05
+  use: True
+  prob: 1.0
   ood_state_prob: 0.7
   type: task
   random_std: 0.01

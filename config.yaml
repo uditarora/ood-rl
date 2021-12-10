@@ -108,7 +108,7 @@ hyperparams:
       img_height: 300
   DQN:
     CartPole_v1:
-      n_timesteps: 1000000
+      n_timesteps: 70000
       learning_rate: 0.0023
       batch_size: 64
       buffer_size: 100000
@@ -119,6 +119,7 @@ hyperparams:
       gradient_steps: 128
       exploration_fraction: 0.16
       exploration_final_eps: 0.04
+      policy_kwargs: "dict(net_arch=[256, 256])"
       img_width: 300
       img_height: 200
     Reacher_v2:

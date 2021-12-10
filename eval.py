@@ -59,7 +59,8 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
             n_envs=policy.n_envs,
         )
         eval_buffer.reset()
-        policy.collect_rollouts(policy.env, NoopCallback(), eval_buffer, n_rollout_steps=3000)
+        env.reset()
+        policy.collect_rollouts(env, NoopCallback(), eval_buffer, n_rollout_steps=3000)
         outlier_detector.fit(eval_buffer)
 
     # Detection
@@ -67,7 +68,7 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
     for rollout_idx in range(num_rollouts):
         rollout_return = 0.0
         observation = env.reset()
-        action = policy.action_space.sample()
+        action = [policy.action_space.sample()]
         done = False
         while not done:
             if (not check_outlier) or (not outlier_detector.predict_outlier(observation)):
