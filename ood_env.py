@@ -42,7 +42,8 @@ class OODEnv(gym.Env):
 
     def step(self, action):
         observation, reward, done, info = self.base_env.step(action)
-        return (self.observation(observation), reward, done, info,)
+        modified_observation, is_state_ood = self.observation(observation)
+        return (modified_observation, reward, done, {"is_state_ood":is_state_ood},)
 
     def reset(self):
         self.trajectory_count += 1
@@ -60,7 +61,7 @@ class OODEnv(gym.Env):
             "ood_trajectory_percentage": 0 if self.trajectory_count==0 else (self.ood_trajectory_count / self.trajectory_count),
         })
 
-        return self.observation(self.base_env.reset())
+        return self.pad(self.base_env.reset())
 
     def close(self):
         self.base_env.close()
@@ -83,7 +84,9 @@ class OODEnv(gym.Env):
         self.state_count += 1
         observation = self.pad(observation)
 
+        is_state_ood = False
         if self.is_current_trajectory_ood and random.random() < self.ood_config.ood_state_prob:
+            is_state_ood = True
             self.ood_state_count += 1
             if self.ood_config.type == "background": # BG shift
                 observation = self.generate_bg_shift_ood(observation)
@@ -94,7 +97,7 @@ class OODEnv(gym.Env):
             elif self.ood_config.type == "blackout":
                 observation = np.zeros(observation.shape).astype(float)
 
-        return observation
+        return observation, is_state_ood
 
     def generate_random_ood(self, random_std, state):
         return np.clip(state + np.random.normal(0, random_std, state.shape), a_min=0.0, a_max=1.0).astype(float)

@@ -14,6 +14,8 @@ import wandb
 import os
 from util import NoopCallback
 
+from sklearn.metrics import accuracy_score
+
 from stable_baselines3 import PPO, DQN, A2C
 from sb3_contrib import TQC, QRDQN, MaskablePPO
 
@@ -65,15 +67,21 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
 
     # Detection
     rollout_returns = [0 for _ in range(num_rollouts)]
+
+    observation_buffer = []
+    ground_truths = []
+    predictions = []
+
     for rollout_idx in range(num_rollouts):
         rollout_return = 0.0
         observation = env.reset()
         action = [policy.action_space.sample()]
         done = False
         while not done:
-            if (not check_outlier) or (not outlier_detector.predict_outlier(observation)):
-                action = policy.policy.forward(torch.from_numpy(observation))[0].detach().cpu().numpy()
+            action = policy.policy.forward(torch.from_numpy(observation))[0].detach().cpu().numpy()
             observation, reward, done, info = env.step(action)
+            predictions.append(outlier_detector.predict_outlier(observation))
+            ground_truths.append(info[0]["is_state_ood"])
             rollout_return += reward[0]
             if done:
                 break
@@ -83,6 +91,11 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
 
     mean_return = np.mean(rollout_returns)
     print(f"Eval mean return: {mean_return}")
+
+    if cfg.eval_outlier_detection:
+        ood_detector_accuracy = accuracy_score(ground_truths, predictions)
+        print(f"OOD detector accuracy: {ood_detector_accuracy}")
+
     return mean_return
 
 
