@@ -1,0 +1,26 @@
+model_path: /Users/sjha/Documents/NYU/DRL/ood-rl/outputs/2021-12-09/21-31-05/PPO_CartPole-v1_17cllu67
+env: CartPole-v1
+model: PPO
+k: 20
+n_frames_stack: 1
+image_input: True
+
+use_ood_detector_wrapped_model: False
+eval_outlier_detection: False
+num_eval_rollouts: 100
+
+ood_config:
+  use: False
+  prob: 0.05
+  ood_state_prob: 0.7
+  type: task
+  random_std: 0.01
+  outlier_env_names:
+    - Acrobot-v1
+    - MountainCar-v0
+    - Pendulum-v0
+
+wandb:
+  entity: nyu_drl
+  project: test-project
+  key: 1b2711d130518c5e80d47a6341cfaf2e4b9f5903
