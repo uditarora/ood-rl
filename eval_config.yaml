@@ -4,7 +4,7 @@ model: PPO
 k: 20
 n_frames_stack: 1
 image_input: True
-distance_threshold_percentile: 0.95
+distance_threshold_percentile: 95
 
 use_ood_detector_wrapped_model: False
 eval_outlier_detection: True
