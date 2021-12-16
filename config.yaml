@@ -1,14 +1,14 @@
 model: PPO
 env: CartPole-v1
 n_frames_stack: 1
-image_input: True
+image_input: False
 
-use_ood_detector_wrapped_model: False
+use_ood_detector_wrapped_model: True
 eval_outlier_detection: False
 num_eval_rollouts: 100
 ood_detector:
-  pretrain_timesteps: 50000
-  fit_outlier_detectors_every_n: 1000
+  pretrain_timesteps: 100000
+  fit_outlier_detectors_every_n: 5000
   k: 20
   distance_threshold_percentile: 95
   distance_metric: md
@@ -16,7 +16,7 @@ ood_detector:
 ood_config:
   use: False
   prob: 0.05
-  ood_state_prob: 0.7
+  ood_state_prob: 0.3
   type: task
   random_std: 0.01
   outlier_env_names:
@@ -27,7 +27,7 @@ ood_config:
 hyperparams:
   PPO:
     CartPole_v1:
-      n_timesteps: 700000
+      n_timesteps: 600000
       learning_rate: 0.0001
       n_steps: 32
       batch_size: 256

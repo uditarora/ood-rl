@@ -108,10 +108,10 @@ class OodDetectorWrappedModel:
         self._setup_model()
 
     def _setup_model(self) -> None:
-        temp_buffer_cls = DictRolloutBuffer if isinstance(self.policy.observation_space, gym.spaces.Dict) else RolloutBuffer
-        buffer_cls = CircularDictRolloutBuffer if isinstance(self.policy.observation_space, gym.spaces.Dict) else CircularRolloutBuffer
+        rollout_buffer_cls = DictRolloutBuffer if isinstance(self.policy.observation_space, gym.spaces.Dict) else RolloutBuffer
+        inlier_buffer_cls = CircularDictRolloutBuffer if isinstance(self.policy.observation_space, gym.spaces.Dict) else CircularRolloutBuffer
 
-        self.inlier_buffer = buffer_cls(
+        self.inlier_buffer = inlier_buffer_cls(
             self.fit_outlier_detectors_every_n + self.policy.n_steps,
             self.policy.observation_space,
             self.policy.action_space,
@@ -122,7 +122,7 @@ class OodDetectorWrappedModel:
         )
 
         # This buffer is used to collect data. The data is then moved to the inlier/outlier buffer.
-        self.temp_buffer = temp_buffer_cls(
+        self.rollout_buffer = rollout_buffer_cls(
             self.policy.n_steps,
             self.policy.observation_space,
             self.policy.action_space,
@@ -132,7 +132,19 @@ class OodDetectorWrappedModel:
             n_envs=self.policy.n_envs,
         )
 
-        self.eval_buffer = temp_buffer_cls(
+        self.policy_buffer = rollout_buffer_cls(
+            self.policy.n_steps,
+            self.policy.observation_space,
+            self.policy.action_space,
+            self.policy.device,
+            gamma=self.policy.gamma,
+            gae_lambda=self.policy.gae_lambda,
+            n_envs=self.policy.n_envs,
+        )
+
+        self.policy.rollout_buffer = self.policy_buffer # TODO: Change to policy_buffer
+
+        self.eval_buffer = rollout_buffer_cls(
             5000,
             self.policy.observation_space,
             self.policy.action_space,
@@ -142,8 +154,6 @@ class OodDetectorWrappedModel:
             n_envs=self.policy.n_envs,
         )
 
-        self.policy.rollout_buffer = self.temp_buffer  # Set policy's buffer to temp buffer
-
         self.outlier_detector = OodDetectorModel(
             self.p,
             self.k,
@@ -152,7 +162,7 @@ class OodDetectorWrappedModel:
             self.distance_metric,
             self.num_actions
         )
-        self.outlier_detector.fit(self.temp_buffer)
+        self.outlier_detector.fit(self.rollout_buffer)
 
     def learn(self,
             total_timesteps,
@@ -182,8 +192,10 @@ class OodDetectorWrappedModel:
         callback.on_training_start(locals(), globals())
 
         while self.policy.num_timesteps < total_timesteps:
+            if (not self.pretraining_done) and self.policy.num_timesteps > self.pretrain_timesteps:
+                self.pretraining_done = True
 
-            continue_training = self.policy.collect_rollouts(self.policy.env, callback, self.temp_buffer, n_rollout_steps=self.policy.n_steps)
+            continue_training = self.policy.collect_rollouts(self.policy.env, callback, self.rollout_buffer, n_rollout_steps=self.policy.n_steps)
             if continue_training is False:
                 break
 
@@ -201,33 +213,42 @@ class OodDetectorWrappedModel:
 
 
             # Figure out of current trajectory is id or ood
-            buffer_range = self.temp_buffer.buffer_size if self.temp_buffer.full else self.temp_buffer.pos
-            trajectory_begins = [i for i in range(buffer_range) if self.temp_buffer.episode_starts[i] != 0.0] + [buffer_range]
+            buffer_range = self.rollout_buffer.buffer_size if self.rollout_buffer.full else self.rollout_buffer.pos
+            trajectory_begins = [i for i in range(buffer_range) if self.rollout_buffer.episode_starts[i] != 0.0] + [buffer_range]
             trajectory_ranges = [(begin, end, ) for begin, end in zip(trajectory_begins, trajectory_begins[1:])]
 
+            self.policy_buffer.reset()
             for trajectory_range in trajectory_ranges:
                 trajectory_inlier = True
-                states_outlier_status = []
-                if self.policy.num_timesteps > self.pretrain_timesteps and (not self.pretraining_done):
+                if self.pretraining_done:
+                    states_outlier_status = []
                     for i in range(trajectory_range[0], trajectory_range[1]):
-                        obs = self.temp_buffer.observations[i]
+                        obs = self.rollout_buffer.observations[i]
                         if self.outlier_detector.predict_outlier(obs): # TODO: Do this entire computation in 1 step
                             states_outlier_status.append(1.0)
                         else:
                             states_outlier_status.append(0.0)
 
-                if np.mean(states_outlier_status) >= 0.5: # Classify trajectory as outlier if half the states are outliers
-                    trajectory_inlier = False
+                    if np.mean(states_outlier_status) >= 0.5: # Classify trajectory as outlier if half the states are outliers
+                        trajectory_inlier = False
 
                 # Move the rollout to the proper buffer
                 if trajectory_inlier:
                     for i in range(trajectory_range[0], trajectory_range[1]):
-                        self.inlier_buffer.add(obs = self.temp_buffer.observations[i],
-                                               action = self.temp_buffer.actions[i],
-                                               reward = self.temp_buffer.rewards[i],
-                                               episode_start = self.temp_buffer.episode_starts[i],
-                                               value = torch.from_numpy(self.temp_buffer.values[i]),
-                                               log_prob = torch.from_numpy(self.temp_buffer.log_probs[i]))
+                        self.policy_buffer.advantages[self.policy_buffer.pos] = self.rollout_buffer.advantages[i]
+                        self.policy_buffer.returns[self.policy_buffer.pos] = self.rollout_buffer.returns[i]
+                        self.policy_buffer.add(obs=self.rollout_buffer.observations[i],
+                                               action=self.rollout_buffer.actions[i],
+                                               reward=self.rollout_buffer.rewards[i],
+                                               episode_start=self.rollout_buffer.episode_starts[i],
+                                               value=torch.from_numpy(self.rollout_buffer.values[i]),
+                                               log_prob=torch.from_numpy(self.rollout_buffer.log_probs[i]))
+                        self.inlier_buffer.add(obs=self.rollout_buffer.observations[i],
+                                               action=self.rollout_buffer.actions[i],
+                                               reward=self.rollout_buffer.rewards[i],
+                                               episode_start=self.rollout_buffer.episode_starts[i],
+                                               value=torch.from_numpy(self.rollout_buffer.values[i]),
+                                               log_prob=torch.from_numpy(self.rollout_buffer.log_probs[i]))
 
             # Display training infos
             if log_interval is not None and iteration % log_interval == 0:
@@ -244,10 +265,10 @@ class OodDetectorWrappedModel:
                 self.policy.logger.dump(step=self.policy.num_timesteps)
 
             self.policy.rollout_buffer.full = True
-            self.policy.train()
-            self.temp_buffer.reset()
-        callback.on_training_end()
+            if self.policy.rollout_buffer.pos > 0:
+                self.policy.train()
 
+        callback.on_training_end()
         return self
 
     def eval(self, num_rollouts = 100, check_outlier=True):
