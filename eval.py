@@ -74,6 +74,7 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
     observation_buffer = []
     ground_truths = []
     predictions = []
+    scores = []
 
     for rollout_idx in range(num_rollouts):
         rollout_return = 0.0
@@ -84,6 +85,7 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
             action = policy.policy.forward(torch.from_numpy(observation))[0].detach().cpu().numpy()
             observation, reward, done, info = env.step(action)
             predictions.append(outlier_detector.predict_outlier(observation))
+            scores.append(outlier_detector.get_distance(observation))
             ground_truths.append(info[0]["is_state_ood"])
             rollout_return += reward[0]
             if done:
@@ -98,7 +100,7 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
     if cfg.eval_outlier_detection:
         ood_detector_accuracy = accuracy_score(ground_truths, predictions)
         print(f"OOD detector accuracy: {ood_detector_accuracy}")
-        ood_detector_auroc = roc_auc_score(ground_truths, predictions)
+        ood_detector_auroc = roc_auc_score(ground_truths, scores)
         print(f"OOD detector AU-ROC: {ood_detector_auroc}")
 
     return mean_return

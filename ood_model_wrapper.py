@@ -16,7 +16,7 @@ class OodDetectorModel:
                  k,
                  distance_threshold_percentile,
                  obs_transform_function,
-                 method, # "md" or "robust-md" or "msp"
+                 method, # "md" or "msp"
                  num_actions,
                  probs_function=None,
                  prob_threshold=0.8
@@ -70,17 +70,27 @@ class OodDetectorModel:
             self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile)
             print(f"{self.distance_threshold_percentile} percentile distance: {self.distance_threshold}")
 
-    def predict_outlier(self, obs):
+    def get_distance(self, obs):
         if self.method == "md":
             obs = self.obs_transform_function(obs).detach().cpu().numpy()
             obs = self.pca_model.transform(obs)
             min_distance = np.min(self.calculate_distance(obs))
-            return min_distance > self.distance_threshold
+            return min_distance
         elif self.method == "msp":
             if self.probs_function is None:
                 raise ValueError("Probs_function that gives the probability over actions needs to be specified")
             probs = self.probs_function(obs).detach().cpu().numpy()
-            return probs.max() < self.prob_threshold
+            return probs.max()
+
+    def predict_outlier(self, obs):
+        if self.method == "md":
+            min_distance = self.get_distance(obs)
+            return min_distance > self.distance_threshold
+        elif self.method == "msp":
+            if self.probs_function is None:
+                raise ValueError("Probs_function that gives the probability over actions needs to be specified")
+            max_prob = self.get_distance(obs)
+            return max_prob < self.prob_threshold
         else:
             raise NotImplementedError("Method", self.method, "has not been implemented yet.")
 
