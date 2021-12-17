@@ -12,7 +12,7 @@ num_eval_rollouts: 100
 
 ood_config:
   use: True
-  prob: 1.0
+  prob: 0.3
   ood_state_prob: 0.7
   type: task
   random_std: 0.01

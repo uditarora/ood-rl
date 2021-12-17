@@ -14,7 +14,7 @@ import wandb
 import os
 from util import NoopCallback
 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 from stable_baselines3 import PPO, DQN, A2C
 from sb3_contrib import TQC, QRDQN, MaskablePPO
@@ -95,6 +95,8 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
     if cfg.eval_outlier_detection:
         ood_detector_accuracy = accuracy_score(ground_truths, predictions)
         print(f"OOD detector accuracy: {ood_detector_accuracy}")
+        ood_detector_auroc = roc_auc_score(ground_truths, predictions)
+        print(f"OOD detector AU-ROC: {ood_detector_auroc}")
 
     return mean_return
 
