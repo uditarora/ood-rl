@@ -16,8 +16,10 @@ class OodDetectorModel:
                  k,
                  distance_threshold_percentile,
                  obs_transform_function,
-                 distance_metric, # "md" or "robust-md"
-                 num_actions
+                 method, # "md" or "robust-md" or "msp"
+                 num_actions,
+                 probs_function=None,
+                 prob_threshold=0.8
     ):
         self.p = p # PCA input dimension
         self.k = k # PCA output dimension
@@ -25,8 +27,11 @@ class OodDetectorModel:
         self.distance_threshold_percentile = distance_threshold_percentile
         self.distance_threshold = 10000000
         self.obs_transform_function = obs_transform_function # A function which returns the activations of the penultimate layer
-        self.distance_metric = distance_metric
+        self.method = method
         self.pca_model = PCA(n_components=k)
+
+        self.probs_function = probs_function # gets the action probability distribution from the policy
+        self.prob_threshold = prob_threshold
 
         if self.num_actions == 1:
             self.class_means = np.zeros(k)
@@ -61,17 +66,26 @@ class OodDetectorModel:
                     self.class_means[i] = np.mean(action_observations, axis=0)
                     self.class_covariances[i] = np.cov(action_observations, rowvar=False)
 
-        self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile)
-        print(f"{self.distance_threshold_percentile} percentile distance: {self.distance_threshold}")
+        if self.method != "msp":
+            self.distance_threshold = np.percentile([np.min(self.calculate_distance(obs)) for obs in observations], self.distance_threshold_percentile)
+            print(f"{self.distance_threshold_percentile} percentile distance: {self.distance_threshold}")
 
     def predict_outlier(self, obs):
-        obs = self.obs_transform_function(obs).detach().cpu().numpy()
-        obs = self.pca_model.transform(obs)
-        min_distance = np.min(self.calculate_distance(obs))
-        return min_distance > self.distance_threshold
+        if self.method == "md":
+            obs = self.obs_transform_function(obs).detach().cpu().numpy()
+            obs = self.pca_model.transform(obs)
+            min_distance = np.min(self.calculate_distance(obs))
+            return min_distance > self.distance_threshold
+        elif self.method == "msp":
+            if self.probs_function is None:
+                raise ValueError("Probs_function that gives the probability over actions needs to be specified")
+            probs = self.probs_function(obs).detach().cpu().numpy()
+            return probs.max() < self.prob_threshold
+        else:
+            raise NotImplementedError("Method", self.method, "has not been implemented yet.")
 
     def calculate_distance(self, obs):
-        if self.distance_metric == "md":
+        if self.method == "md":
             if self.num_actions == 1:
                 distances = [mahalanobis(obs, self.class_means, VI=self.class_covariances)]
             else:

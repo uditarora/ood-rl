@@ -42,13 +42,16 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
                 torch.squeeze(torch.from_numpy(x).to(device), dim=1)
             )
         )[0])
+        probs_function = lambda x: policy.policy.get_distribution(torch.from_numpy(x).to(device)).distribution.probs
         outlier_detector = OodDetectorModel(
             policy.policy.mlp_extractor.latent_dim_pi,
             cfg.k,
             cfg.distance_threshold_percentile,
             obs_transform_function,
-            "md",
-            num_actions
+            cfg.ood_detection_method,
+            num_actions,
+            probs_function,
+            cfg.prob_threshold
         )
         temp_buffer_cls = DictRolloutBuffer if isinstance(policy.observation_space, gym.spaces.Dict) else RolloutBuffer
         eval_buffer = temp_buffer_cls(

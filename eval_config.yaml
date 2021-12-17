@@ -1,10 +1,12 @@
-model_path: /Users/sjha/Documents/NYU/DRL/ood-rl/outputs/2021-12-10/12-23-29/PPO_CartPole-v1_3eyhshx4
+model_path: /Users/udit/code/nyu/fall21/DRL/ood-rl/outputs/2021-12-11/00-50-55/PPO_CartPole-v1_7t1h4c21
 env: CartPole-v1
 model: PPO
 k: 20
 n_frames_stack: 1
 image_input: True
+ood_detection_method: msp
 distance_threshold_percentile: 95
+prob_threshold: 0.8
 
 use_ood_detector_wrapped_model: False
 eval_outlier_detection: True
