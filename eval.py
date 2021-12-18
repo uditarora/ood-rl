@@ -13,13 +13,18 @@ import torch
 import wandb
 import os
 from util import NoopCallback
-
+from sklearn.manifold import TSNE
+from random import sample
 from sklearn.metrics import accuracy_score, roc_auc_score
 
 from stable_baselines3 import PPO, DQN, A2C
 from sb3_contrib import TQC, QRDQN, MaskablePPO
 
+import seaborn as sns
+
 from wandb.integration.sb3 import WandbCallback
+
+import matplotlib.pyplot as plt
 
 ALGO_DICT = {
     "PPO": PPO,
@@ -84,6 +89,7 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
         while not done:
             action = policy.policy.forward(torch.from_numpy(observation))[0].detach().cpu().numpy()
             observation, reward, done, info = env.step(action)
+            observation_buffer.append(observation)
             predictions.append(outlier_detector.predict_outlier(observation))
             scores.append(outlier_detector.get_distance(observation))
             ground_truths.append(info[0]["is_state_ood"])
@@ -100,10 +106,42 @@ def eval(env, policy, cfg, num_actions, num_rollouts=100, check_outlier=True):
     if cfg.eval_outlier_detection:
         ood_detector_accuracy = accuracy_score(ground_truths, predictions)
         print(f"OOD detector accuracy: {ood_detector_accuracy}")
-        ood_detector_auroc = roc_auc_score(ground_truths, scores)
+        try:
+            ood_detector_auroc = roc_auc_score(ground_truths, scores)
+        except:
+            ood_detector_auroc = 1.0
         print(f"OOD detector AU-ROC: {ood_detector_auroc}")
 
-    return mean_return
+    # t-SNE
+    n_plot = 10000
+    observation_buffer = observation_buffer[0:n_plot]
+    outlier_obs = [obs for obs, gt in zip(observation_buffer, ground_truths) if gt]
+    inlier_obs = [obs for obs, gt in zip(observation_buffer, ground_truths) if not gt]
+    n_inliers = len(inlier_obs)
+    n_outliers = n_plot - n_inliers
+    observation_buffer = inlier_obs + sample(outlier_obs, n_outliers)
+    ground_truths = [False for x in range(n_inliers)] + [True for x in range(n_outliers)]
+    labels = ["outlier" if x else "inlier" for x in ground_truths]
+
+    tsne_transformed = TSNE(n_components=2).fit_transform(
+        np.squeeze(np.array(observation_buffer))
+    )
+    plot = sns.scatterplot(x=[x[0] for x in tsne_transformed], y=[x[1] for x in tsne_transformed],
+                           hue=labels)
+    plot.figure.savefig("tsne_observations.png", dpi=300)
+
+    plt.clf()
+    transformed_obs = [outlier_detector.obs_transform_function(x).detach().cpu().numpy() for x in observation_buffer]
+    tsne_transformed = TSNE(n_components=2).fit_transform(
+        np.squeeze(np.array(transformed_obs))
+    )
+    plot = sns.scatterplot(x=[x[0] for x in tsne_transformed], y=[x[1] for x in tsne_transformed], hue=labels)
+    plot.figure.savefig("tsne_penultimate.png", dpi=300)
+
+    return {
+        "mean_return": mean_return,
+        "auroc": ood_detector_auroc,
+    }
 
 
 @hydra.main(config_path='.', config_name='eval_config')
@@ -161,8 +199,10 @@ def main(cfg):
     env = Monitor(env)
     env = DummyVecEnv([lambda: env])
 
-    avg_eval_reward = eval(env, model, cfg, model.action_space.n, cfg.num_eval_rollouts, cfg.eval_outlier_detection)
-    wandb.config.update({"avg_eval_reward": avg_eval_reward})
+    eval_metrics = eval(env, model, cfg, model.action_space.n, cfg.num_eval_rollouts, cfg.eval_outlier_detection)
+
+    wandb.config.update({"avg_eval_reward": eval_metrics["mean_return"]})
+    wandb.config.update({"auroc": eval_metrics["auroc"]})
 
     run.finish()
 

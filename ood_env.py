@@ -52,14 +52,17 @@ class OODEnv(gym.Env):
             self.is_current_trajectory_ood = True
             self.ood_trajectory_count += 1
 
-        wandb.log({
-            "state_count": self.state_count,
-            "trajectory_count": self.trajectory_count,
-            "ood_trajectory_count": self.ood_trajectory_count,
-            "ood_state_count": self.ood_state_count,
-            "ood_state_percentage": 0 if self.state_count==0 else (self.ood_state_count / self.state_count),
-            "ood_trajectory_percentage": 0 if self.trajectory_count==0 else (self.ood_trajectory_count / self.trajectory_count),
-        })
+        try:
+            wandb.log({
+                "state_count": self.state_count,
+                "trajectory_count": self.trajectory_count,
+                "ood_trajectory_count": self.ood_trajectory_count,
+                "ood_state_count": self.ood_state_count,
+                "ood_state_percentage": 0 if self.state_count==0 else (self.ood_state_count / self.state_count),
+                "ood_trajectory_percentage": 0 if self.trajectory_count==0 else (self.ood_trajectory_count / self.trajectory_count),
+            })
+        except:
+            pass
 
         return self.pad(self.base_env.reset())
 
